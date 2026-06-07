@@ -26,13 +26,17 @@ export default function WordTypingChallenge({
   const pendingNRef = useRef(false);
   const pendingNTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const wrongLetterTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const introFiredRef = useRef(false);
 
   useEffect(() => {
     // Auto-focus input to open native keyboard
     inputRef.current?.focus();
 
-    // Play intro audio
-    playAudioPrompt(`Ahora escribe la palabra ${word.toLowerCase()}.`, `typing_intro_${word}`);
+    // Play intro audio only once
+    if (!introFiredRef.current) {
+      introFiredRef.current = true;
+      playAudioPrompt(`Ahora escribe la palabra ${word.toLowerCase()}.`, `typing_intro_${word}`);
+    }
 
     // Cleanup timeouts on unmount
     return () => {
