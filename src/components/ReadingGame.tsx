@@ -185,6 +185,12 @@ export default function ReadingGame({ vowelLevel, difficulty = 'easy', onChangeV
 
   const handleSyllableClick = async (choiceText: string, isCorrect: boolean) => {
     if (isAnswering) return; // Prevent double taps during audio feedback
+
+    // Cancel any ongoing speech to prioritize user action
+    if ('speechSynthesis' in window) {
+      window.speechSynthesis.cancel();
+    }
+
     setIsAnswering(true);
 
     if (isCorrect) {
@@ -236,7 +242,12 @@ export default function ReadingGame({ vowelLevel, difficulty = 'easy', onChangeV
       {/* Back to Menu Button */}
       {onBackToMenu && (
         <button
-          onClick={onBackToMenu}
+          onClick={() => {
+            if ('speechSynthesis' in window) {
+              window.speechSynthesis.cancel();
+            }
+            onBackToMenu();
+          }}
           className="absolute top-4 left-4 p-2.5 bg-white/90 hover:bg-white text-slate-700 font-bold border-2 border-slate-200 hover:border-slate-300 rounded-xl shadow transition cursor-pointer flex items-center gap-1.5 text-xs z-20"
         >
           <ArrowLeft className="w-4 h-4" />
@@ -252,7 +263,12 @@ export default function ReadingGame({ vowelLevel, difficulty = 'easy', onChangeV
             <button
               key={vowel}
               onClick={() => {
-                if (!isAnswering) onChangeVowel(vowel);
+                if (!isAnswering) {
+                  if ('speechSynthesis' in window) {
+                    window.speechSynthesis.cancel();
+                  }
+                  onChangeVowel(vowel);
+                }
               }}
               disabled={isAnswering}
               className={`px-3 py-1.5 text-xs font-black rounded-xl transition cursor-pointer ${

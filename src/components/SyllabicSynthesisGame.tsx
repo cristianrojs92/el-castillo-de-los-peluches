@@ -325,6 +325,12 @@ export default function SyllabicSynthesisGame({
 
   const handleSyllableClick = async (item: { text: string; initialIndex: number; key: number }) => {
     if (isAnswering || isFused) return;
+
+    // Cancel any ongoing speech to prioritize user action
+    if ('speechSynthesis' in window) {
+      window.speechSynthesis.cancel();
+    }
+
     setIsAnswering(true);
 
     const nextCorrectIndex = placedIndices.length; // Next required syllable index (e.g., 0 for first, 1 for second)
@@ -469,7 +475,12 @@ export default function SyllabicSynthesisGame({
       {/* 0. Top Bar Actions */}
       <div className="flex items-center justify-between gap-2 mb-3">
         <button
-          onClick={onBackToMenu}
+          onClick={() => {
+            if ('speechSynthesis' in window) {
+              window.speechSynthesis.cancel();
+            }
+            onBackToMenu();
+          }}
           disabled={isAnswering}
           className="px-3 py-1.5 bg-white/90 hover:bg-white text-slate-600 hover:text-purple-700 font-extrabold text-xs rounded-xl border border-slate-250 transition cursor-pointer flex items-center gap-1 active:scale-95 disabled:opacity-50"
         >
@@ -484,7 +495,12 @@ export default function SyllabicSynthesisGame({
         </div>
 
         <button
-          onClick={handleResetWord}
+          onClick={() => {
+            if ('speechSynthesis' in window) {
+              window.speechSynthesis.cancel();
+            }
+            handleResetWord();
+          }}
           disabled={isAnswering || isFused || placedIndices.length === 0}
           className="px-3 py-1.5 bg-white/90 hover:bg-white text-slate-500 hover:text-pink-600 font-extrabold text-xs rounded-xl border border-slate-200 transition cursor-pointer flex items-center gap-1 active:scale-95 disabled:opacity-30"
           title="Reiniciar palabra actual"
@@ -718,7 +734,12 @@ export default function SyllabicSynthesisGame({
       {/* Parental/Assistant Skip Helper line */}
       <div className="mt-5.5 flex justify-center">
         <button
-          onClick={handleNextWordSkip}
+          onClick={() => {
+            if ('speechSynthesis' in window) {
+              window.speechSynthesis.cancel();
+            }
+            handleNextWordSkip();
+          }}
           disabled={isAnswering || isFused}
           className="text-4xs font-black text-slate-400 hover:text-purple-600 transition tracking-widest uppercase cursor-pointer py-1 px-3 bg-white/20 hover:bg-white/60 rounded-lg"
         >

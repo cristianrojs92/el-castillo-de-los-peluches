@@ -29,6 +29,11 @@ export default function WordTypingChallenge({
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const lastChar = e.target.value.toUpperCase().slice(-1);
 
+    // Cancel any ongoing speech to prioritize user action
+    if ('speechSynthesis' in window) {
+      window.speechSynthesis.cancel();
+    }
+
     // Reset input for next character
     e.target.value = '';
 
