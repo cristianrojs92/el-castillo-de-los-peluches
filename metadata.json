@@ -1,0 +1,6 @@
+{
+  "name": "El Castillo de los Peluches",
+  "description": "Aplicación web lúdico-pedagógica para el aprendizaje de la lectura. Fase Vocal A (BA, RA, TA, LA, PA, YA) con refuerzo sonoro y paleta de dibujo interactivo.",
+  "requestFramePermissions": ["microphone"],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
