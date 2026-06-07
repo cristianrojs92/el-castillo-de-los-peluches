@@ -36,28 +36,32 @@ export default function WordTypingChallenge({
   }, [word, playAudioPrompt]);
 
   const handleLetterPress = (charToAdd: string) => {
-    const expected = word[typedLetters.length];
+    setTypedLetters((prevLetters) => {
+      const expected = word[prevLetters.length];
 
-    if (charToAdd === expected) {
-      const nextLetters = [...typedLetters, charToAdd];
-      setTypedLetters(nextLetters);
+      if (charToAdd === expected) {
+        const nextLetters = [...prevLetters, charToAdd];
 
-      // Check if word is complete
-      if (nextLetters.length === word.length) {
-        // Word completed — celebrate and trigger onComplete
-        playAudioPrompt(
-          '¡Perfecto! ¡Escribiste la palabra correctamente!',
-          `typing_complete_${word}`
-        );
-        setTimeout(() => {
-          onComplete();
-        }, 1400);
+        // Check if word is complete
+        if (nextLetters.length === word.length) {
+          // Word completed — celebrate and trigger onComplete
+          playAudioPrompt(
+            '¡Perfecto! ¡Escribiste la palabra correctamente!',
+            `typing_complete_${word}`
+          );
+          setTimeout(() => {
+            onComplete();
+          }, 1400);
+        }
+
+        return nextLetters;
+      } else {
+        // Wrong letter — shake animation
+        setIsShaking(true);
+        setTimeout(() => setIsShaking(false), 400);
+        return prevLetters; // Don't add the wrong letter
       }
-    } else {
-      // Wrong letter — shake animation
-      setIsShaking(true);
-      setTimeout(() => setIsShaking(false), 400);
-    }
+    });
   };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
