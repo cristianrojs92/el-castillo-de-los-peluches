@@ -177,12 +177,30 @@ export default function AudioSettings({ onClose, onUpdateCache }: AudioSettingsP
 
   // Speaks using fallback text speech synthesis
   const previewTTS = (text: string) => {
-    const utterance = new SpeechSynthesisUtterance(text);
-    utterance.lang = 'es-MX';
-    utterance.rate = 0.8;
-    utterance.pitch = 1.35;
+    if (!('speechSynthesis' in window)) return;
+    
     window.speechSynthesis.cancel();
-    window.speechSynthesis.speak(utterance);
+
+    // Delay speech execution slightly to prevent race conditions in Chrome
+    setTimeout(() => {
+      const utterance = new SpeechSynthesisUtterance(text);
+      utterance.lang = 'es-MX';
+      utterance.rate = 0.8;
+      utterance.pitch = 1.35;
+      
+      // Find an elegant Spanish voice model from browser list
+      const availableVoices = window.speechSynthesis.getVoices();
+      const esVoice =
+        availableVoices.find((v) => v.lang.toLowerCase() === 'es-mx') ||
+        availableVoices.find((v) => v.lang.toLowerCase() === 'es-es') ||
+        availableVoices.find((v) => v.lang.toLowerCase().startsWith('es'));
+
+      if (esVoice) {
+        utterance.voice = esVoice;
+      }
+
+      window.speechSynthesis.speak(utterance);
+    }, 100);
   };
 
   return (

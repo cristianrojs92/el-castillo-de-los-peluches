@@ -16,6 +16,7 @@ export default function App() {
   const [customVoices, setCustomVoices] = useState<Record<string, string>>({}); // id -> blobUrl
   const [showSettings, setShowSettings] = useState<boolean>(false);
   const [ambientMelody, setAmbientMelody] = useState<boolean>(false);
+  const [voices, setVoices] = useState<SpeechSynthesisVoice[]>([]);
 
   // Audio elements ref for ambient backup music if requested
   const ambientAudioRef = useRef<HTMLAudioElement | null>(null);
@@ -23,6 +24,20 @@ export default function App() {
   // Initialize and load any parent recordings saved in IndexedDB
   useEffect(() => {
     loadParentVoices();
+
+    // Listen to voiceschanged to handle asynchronous SpeechSynthesis loading in Chrome/Safari
+    if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
+      const updateVoices = () => {
+        const availableVoices = window.speechSynthesis.getVoices();
+        setVoices(availableVoices);
+      };
+      // Try loading voices immediately
+      updateVoices();
+      
+      // Chrome/Safari load voices asynchronously and trigger this event
+      window.speechSynthesis.onvoiceschanged = updateVoices;
+    }
+
     return () => {
       // Clean up previous blob URLs
       Object.values(customVoices).forEach((url) => URL.revokeObjectURL(url as string));
@@ -76,44 +91,92 @@ export default function App() {
     return new Promise((resolve) => {
       if (!('speechSynthesis' in window)) {
         resolve();
-          return;
+        return;
       }
-      window.speechSynthesis.cancel();
 
       // Preprocess text to prevent browser TTS from expanding common Spanish abbreviations
-      // or Roman numerals (e.g., "NE" -> "nordeste", "LU" -> "lunes", "BO" -> "barrio", "SA" -> "sociedad anónima",
-      // "DO" -> "domingo", "MI" -> "miércoles", "VI" -> "viernes"/"seis", "TO" -> "to" or "tu").
-      // Since "h" is completely silent in Spanish, adding key trailing "H" preserves correct syllable sounds while bypassing all abbreviation dictionaries.
       const processedText = text.replace(/\b([bcdfghjklmnñprstvwxyz])([aeiouáéíóú])\b/gi, (match, c, v) => {
         const isUppercase = match === match.toUpperCase();
         return isUppercase ? `${c}${v}H` : `${c}${v}h`;
       });
 
       const utterance = new SpeechSynthesisUtterance(processedText);
-      utterance.lang = 'es-MX'; // sweet-sounding child friendly Mexican/Latin Spanish
-      utterance.rate = 0.8; // friendly and steady speed
-      utterance.pitch = 1.35; // cute, comforting tone
+      utterance.lang = 'es-MX';
+      utterance.rate = 0.8;
+      utterance.pitch = 1.35;
+      utterance.volume = 1;
+
+      let hasStarted = false;
+      let hasEnded = false;
+      let timeout: NodeJS.Timeout | null = null;
+
+      utterance.onstart = () => {
+        hasStarted = true;
+        if (timeout) clearTimeout(timeout);
+      };
 
       utterance.onend = () => {
+        hasEnded = true;
+        if (timeout) clearTimeout(timeout);
         resolve();
       };
-      utterance.onerror = () => {
-        resolve();
+
+      utterance.onerror = (e) => {
+        if (timeout) clearTimeout(timeout);
+        if (!hasEnded) resolve();
       };
 
       // Find an elegant Spanish voice model from browser list
-      const voices = window.speechSynthesis.getVoices();
-      const esVoice = voices.find((v) => v.lang.startsWith('es'));
+      const currentVoices = voices.length > 0 ? voices : window.speechSynthesis.getVoices();
+      const esVoice =
+        currentVoices.find((v) => v.lang.toLowerCase() === 'es-mx') ||
+        currentVoices.find((v) => v.lang.toLowerCase() === 'es-es') ||
+        currentVoices.find((v) => v.lang.toLowerCase().startsWith('es'));
+
       if (esVoice) {
         utterance.voice = esVoice;
       }
 
+      // Pause if speaking, don't cancel completely to avoid blocking
+      if (window.speechSynthesis.speaking) {
+        window.speechSynthesis.pause();
+        setTimeout(() => window.speechSynthesis.resume(), 50);
+      }
+
       window.speechSynthesis.speak(utterance);
+
+      // Fallback: Estimate duration based on text length if callbacks don't work
+      const estimatedDuration = Math.max(500, Math.min((processedText.length / 5 / 2.5) * 1000, 5000));
+
+      // If speech doesn't start after 300ms, use fallback timing
+      timeout = setTimeout(() => {
+        if (!hasStarted) {
+          const fallbackTimeout = setTimeout(() => {
+            if (!hasEnded) {
+              hasEnded = true;
+              resolve();
+            }
+          }, estimatedDuration);
+        }
+      }, 300);
     });
   };
 
   // Toggle soft sound synthesizer chime or play general greeting
   const handleStartGame = async () => {
+    // Prime SpeechSynthesis inside the direct user click handler to unlock the audio context in Safari/Chrome
+    if ('speechSynthesis' in window) {
+      const primeUtterance = new SpeechSynthesisUtterance('.');
+      primeUtterance.volume = 0;
+      primeUtterance.rate = 2;
+
+      try {
+        window.speechSynthesis.speak(primeUtterance);
+        await new Promise(r => setTimeout(r, 100));
+      } catch (e) {
+        // Silent error handling
+      }
+    }
     setCurrentMode('playing');
   };
 
