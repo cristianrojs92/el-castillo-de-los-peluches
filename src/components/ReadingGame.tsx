@@ -91,6 +91,15 @@ export default function ReadingGame({ vowelLevel, difficulty = 'easy', onChangeV
     }
   };
 
+  const getTextSizeClass = (): string => {
+    switch (difficulty) {
+      case 'easy': return 'text-6xl sm:text-7xl md:text-8xl';
+      case 'medium': return 'text-5xl sm:text-6xl md:text-7xl';
+      case 'hard': return 'text-4xl sm:text-5xl md:text-6xl';
+      default: return 'text-6xl sm:text-7xl md:text-8xl';
+    }
+  };
+
   // Initiate a new turn when currentStep changes
   useEffect(() => {
     if (currentStep < listaSilabasActive.length) {
@@ -342,7 +351,7 @@ export default function ReadingGame({ vowelLevel, difficulty = 'easy', onChangeV
                       fontFamily: '"Fredoka", "Arial Rounded MT Bold", sans-serif',
                     }}
                   >
-                    <span className="text-6xl sm:text-7xl md:text-8xl font-black font-sans text-slate-900 group-hover:text-pink-500 transition-colors tracking-tight">
+                    <span className={`${getTextSizeClass()} font-black font-sans text-slate-900 group-hover:text-pink-500 transition-colors tracking-tight`}>
                       {choice.text}
                     </span>
                   </button>
