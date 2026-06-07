@@ -2,8 +2,10 @@ import { motion } from 'motion/react';
 import { useEffect, useState } from 'react';
 import './ChibiBunny.css';
 
+export type TeddyBearState = 'idle' | 'talking' | 'correct' | 'incorrect' | 'welcoming';
+
 interface TeddyBearProps {
-  state: 'idle' | 'talking' | 'correct' | 'incorrect' | 'welcoming';
+  state: TeddyBearState;
 }
 
 export default function TeddyBear({ state }: TeddyBearProps) {

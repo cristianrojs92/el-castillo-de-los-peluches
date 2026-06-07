@@ -1,11 +1,14 @@
 import { useState, useEffect, useRef } from 'react';
 import { motion } from 'motion/react';
+import { TeddyBearState } from './TeddyBear';
 
 interface WordTypingChallengeProps {
   word: string;
   emoji: string;
   onComplete: () => void;
   playAudioPrompt: (text: string, id: string) => Promise<void>;
+  teddyState?: TeddyBearState;
+  setTeddyState?: (state: TeddyBearState) => void;
 }
 
 export default function WordTypingChallenge({
@@ -13,12 +16,16 @@ export default function WordTypingChallenge({
   emoji,
   onComplete,
   playAudioPrompt,
+  teddyState,
+  setTeddyState,
 }: WordTypingChallengeProps) {
   const [typedLetters, setTypedLetters] = useState<string[]>([]);
   const [isShaking, setIsShaking] = useState(false);
+  const [wrongLetter, setWrongLetter] = useState<string | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const pendingNRef = useRef(false);
   const pendingNTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const wrongLetterTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
     // Auto-focus input to open native keyboard
@@ -27,10 +34,13 @@ export default function WordTypingChallenge({
     // Play intro audio
     playAudioPrompt(`Ahora escribe la palabra ${word.toLowerCase()}.`, `typing_intro_${word}`);
 
-    // Cleanup timeout on unmount
+    // Cleanup timeouts on unmount
     return () => {
       if (pendingNTimeoutRef.current) {
         clearTimeout(pendingNTimeoutRef.current);
+      }
+      if (wrongLetterTimeoutRef.current) {
+        clearTimeout(wrongLetterTimeoutRef.current);
       }
     };
   }, [word, playAudioPrompt]);
@@ -41,6 +51,12 @@ export default function WordTypingChallenge({
 
       if (charToAdd === expected) {
         const nextLetters = [...prevLetters, charToAdd];
+        setWrongLetter(null);
+        setIsShaking(false);
+        setTeddyState?.('correct');
+        if (wrongLetterTimeoutRef.current) {
+          clearTimeout(wrongLetterTimeoutRef.current);
+        }
 
         // Check if word is complete
         if (nextLetters.length === word.length) {
@@ -56,9 +72,17 @@ export default function WordTypingChallenge({
 
         return nextLetters;
       } else {
-        // Wrong letter — shake animation
+        // Wrong letter — show in red for 700ms then disappear
+        setWrongLetter(charToAdd);
         setIsShaking(true);
-        setTimeout(() => setIsShaking(false), 400);
+        setTeddyState?.('incorrect');
+        if (wrongLetterTimeoutRef.current) {
+          clearTimeout(wrongLetterTimeoutRef.current);
+        }
+        wrongLetterTimeoutRef.current = setTimeout(() => {
+          setWrongLetter(null);
+          setIsShaking(false);
+        }, 700);
         return prevLetters; // Don't add the wrong letter
       }
     });
@@ -116,23 +140,23 @@ export default function WordTypingChallenge({
   };
 
   return (
-    <div className="flex-1 flex flex-col justify-between p-4 md:p-6 w-full max-w-lg mx-auto relative select-none">
+    <div className="flex flex-col gap-8 p-4 md:p-8 w-full max-w-2xl relative select-none">
       {/* Header with emoji and instruction */}
-      <div className="flex flex-col items-center gap-4 mb-8">
+      <div className="flex flex-col items-center gap-6">
         <motion.div
           initial={{ scale: 0.8 }}
           animate={{ scale: 1 }}
-          className="text-6xl md:text-7xl"
+          className="text-8xl md:text-9xl"
         >
           {emoji}
         </motion.div>
-        <h2 className="text-2xl md:text-3xl font-black text-purple-900 text-center uppercase">
+        <h2 className="text-3xl md:text-4xl font-black text-purple-900 text-center uppercase">
           ¡Escribe la palabra!
         </h2>
       </div>
 
       {/* Letter boxes */}
-      <div className="flex justify-center gap-3 md:gap-4 mb-12">
+      <div className="flex justify-center gap-4 md:gap-5 flex-wrap">
         {word.split('').map((letter, i) => {
           const isTyped = i < typedLetters.length;
           const isActive = i === typedLetters.length;
@@ -144,15 +168,16 @@ export default function WordTypingChallenge({
               animate={{ scale: 1, opacity: 1 }}
               transition={{ delay: i * 0.05 }}
               className={`
-                w-12 h-16 md:w-14 md:h-20 rounded-xl border-4 flex items-center justify-center
-                font-black text-3xl md:text-4xl transition-all
+                w-16 h-24 md:w-20 md:h-28 rounded-xl border-4 flex items-center justify-center
+                font-black text-4xl md:text-5xl transition-all
                 ${isTyped ? 'bg-green-400 border-green-500 text-white shadow-lg' : ''}
-                ${isActive && !isShaking ? 'border-rose-500 scale-110 animate-pulse' : ''}
+                ${isActive && wrongLetter ? 'bg-red-100 border-red-500 text-red-600' : ''}
+                ${isActive && !wrongLetter && !isShaking ? 'border-rose-500 scale-110 animate-pulse' : ''}
                 ${!isTyped && !isActive ? 'bg-white border-slate-200' : ''}
-                ${isActive && isShaking ? 'animate-shake border-red-500' : ''}
+                ${isActive && isShaking && !wrongLetter ? 'animate-shake border-red-500' : ''}
               `}
             >
-              {isTyped ? typedLetters[i] : ''}
+              {isTyped ? typedLetters[i] : isActive && wrongLetter ? wrongLetter : ''}
             </motion.div>
           );
         })}
@@ -171,8 +196,8 @@ export default function WordTypingChallenge({
       />
 
       {/* Progress message */}
-      <div className="mt-auto text-center">
-        <p className="text-sm md:text-base font-bold text-purple-700 uppercase tracking-wide">
+      <div className="text-center">
+        <p className="text-base md:text-lg font-bold text-purple-700 uppercase tracking-wide">
           {typedLetters.length === 0
             ? 'Escribe la primera letra'
             : `Llevas ${typedLetters.length} de ${word.length} letras`}

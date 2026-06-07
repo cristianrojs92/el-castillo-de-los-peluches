@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Sparkles, ArrowLeft } from 'lucide-react';
-import TeddyBear from './TeddyBear';
+import { TeddyBearState } from './TeddyBear';
 import { Syllable } from '../types';
 
 interface ReadingGameProps {
@@ -13,6 +13,8 @@ interface ReadingGameProps {
   onLevelComplete: () => void;
   onBackToMenu?: () => void;
   playAudioPrompt: (text: string, id: string) => Promise<void>;
+  teddyState: TeddyBearState;
+  setTeddyState: (state: TeddyBearState) => void;
 }
 
 const LISTA_SILABAS_A: Syllable[] = [
@@ -62,11 +64,10 @@ const CONSONANT_NAMES_TTS: Record<string, string> = {
   'T': 'te', 'V': 've', 'W': 'doble ve', 'X': 'equis', 'Y': 'ye', 'Z': 'zeta'
 };
 
-export default function ReadingGame({ vowelLevel, difficulty = 'easy', onChangeVowel, customVoices, onLevelComplete, onBackToMenu, playAudioPrompt }: ReadingGameProps) {
+export default function ReadingGame({ vowelLevel, difficulty = 'easy', onChangeVowel, customVoices, onLevelComplete, onBackToMenu, playAudioPrompt, teddyState, setTeddyState }: ReadingGameProps) {
   const listaSilabasActive = SILLABAS_POR_NIVEL[vowelLevel] || LISTA_SILABAS_A;
   const [currentStep, setCurrentStep] = useState<number>(0);
   const [choices, setChoices] = useState<{ text: string; isCorrect: boolean; key: number }[]>([]);
-  const [teddyState, setTeddyState] = useState<'idle' | 'talking' | 'correct' | 'incorrect' | 'welcoming'>('welcoming');
   const [disabledButtons, setDisabledButtons] = useState<Record<string, boolean>>({});
   const [isAnswering, setIsAnswering] = useState<boolean>(false);
   const [bubbleText, setBubbleText] = useState<string>('¡HOLA PRINCESA!\n¡VAMOS A JUGAR!');
@@ -237,7 +238,7 @@ export default function ReadingGame({ vowelLevel, difficulty = 'easy', onChangeV
   const correctSyllable = listaSilabasActive[currentStep] || 'BA';
 
   return (
-    <div className="flex-1 flex flex-col justify-between p-4 md:p-6 w-full max-w-lg mx-auto relative select-none">
+    <div className="flex flex-col p-4 md:p-6 w-full max-w-2xl relative select-none">
 
       {/* Back to Menu Button */}
       {onBackToMenu && (
@@ -255,85 +256,75 @@ export default function ReadingGame({ vowelLevel, difficulty = 'easy', onChangeV
         </button>
       )}
 
-      {/* 0. Vocal Level Switcher Tabs */}
-      <div className="flex gap-1.5 justify-center mb-3 flex-wrap">
-        {(['A', 'E', 'I', 'O', 'U'] as const).map((vowel) => {
-          const isActive = vowel === vowelLevel;
-          return (
-            <button
-              key={vowel}
-              onClick={() => {
-                if (!isAnswering) {
-                  if ('speechSynthesis' in window) {
-                    window.speechSynthesis.cancel();
-                  }
-                  onChangeVowel(vowel);
-                }
-              }}
-              disabled={isAnswering}
-              className={`px-3 py-1.5 text-xs font-black rounded-xl transition cursor-pointer ${
-                isActive
-                  ? 'bg-gradient-to-r from-pink-500 to-rose-400 text-white shadow-md scale-105 border-0'
-                  : 'bg-white/80 hover:bg-white text-slate-500 border border-slate-200'
-              }`}
-            >
-              VOCAL {vowel}
-            </button>
-          );
-        })}
-      </div>
-
-      {/* 1. Header Progress Bar (Dynamic Stars) */}
-      <div className="bg-white/85 p-3 rounded-2xl shadow-sm border border-pink-100 flex flex-col items-center gap-1.5">
-        <div className="text-2xs text-purple-700 font-extrabold uppercase tracking-widest text-center">
-          SÍLABA {currentStep + 1} DE {listaSilabasActive.length} • ESTRELLAS DE LA VOCAL {vowelLevel}
-        </div>
-        <div className="flex items-center justify-center gap-1 w-full flex-wrap px-2">
-          {Array.from({ length: listaSilabasActive.length }).map((_, i) => {
-            const isEarned = i < currentStep;
-            return (
-              <motion.div
-                key={i}
-                initial={{ scale: 0.8 }}
-                animate={isEarned ? { scale: [1, 1.3, 1], rotate: [0, 15, 0] } : {}}
-                transition={{ duration: 0.5 }}
-                className="relative"
-              >
-                {/* Visual rendering of high contrasts stars */}
-                <span
-                  className={`text-lg md:text-xl transition-colors drop-shadow-sm ${
-                    isEarned ? 'text-amber-400 font-bold' : 'text-slate-300'
+      {/* Main content area: Game content */}
+      <div className="flex-1 flex flex-col justify-between">
+          {/* 0. Vocal Level Switcher Tabs */}
+          <div className="flex gap-1.5 justify-center mb-3 flex-wrap">
+            {(['A', 'E', 'I', 'O', 'U'] as const).map((vowel) => {
+              const isActive = vowel === vowelLevel;
+              return (
+                <button
+                  key={vowel}
+                  onClick={() => {
+                    if (!isAnswering) {
+                      if ('speechSynthesis' in window) {
+                        window.speechSynthesis.cancel();
+                      }
+                      onChangeVowel(vowel);
+                    }
+                  }}
+                  disabled={isAnswering}
+                  className={`px-3 py-1.5 text-xs font-black rounded-xl transition cursor-pointer ${
+                    isActive
+                      ? 'bg-gradient-to-r from-pink-500 to-rose-400 text-white shadow-md scale-105 border-0'
+                      : 'bg-white/80 hover:bg-white text-slate-500 border border-slate-200'
                   }`}
                 >
-                  ★
-                </span>
-                {isEarned && (
+                  VOCAL {vowel}
+                </button>
+              );
+            })}
+          </div>
+
+          {/* 1. Header Progress Bar (Dynamic Stars) */}
+          <div className="bg-white/85 p-3 rounded-2xl shadow-sm border border-pink-100 flex flex-col items-center gap-1.5">
+            <div className="text-2xs text-purple-700 font-extrabold uppercase tracking-widest text-center">
+              SÍLABA {currentStep + 1} DE {listaSilabasActive.length} • ESTRELLAS DE LA VOCAL {vowelLevel}
+            </div>
+            <div className="flex items-center justify-center gap-1 w-full flex-wrap px-2">
+              {Array.from({ length: listaSilabasActive.length }).map((_, i) => {
+                const isEarned = i < currentStep;
+                return (
                   <motion.div
-                    className="absolute inset-0 text-amber-500 scale-125 opacity-20 blur-xs animate-spin-slow"
+                    key={i}
+                    initial={{ scale: 0.8 }}
+                    animate={isEarned ? { scale: [1, 1.3, 1], rotate: [0, 15, 0] } : {}}
+                    transition={{ duration: 0.5 }}
+                    className="relative"
                   >
-                    ★
+                    {/* Visual rendering of high contrasts stars */}
+                    <span
+                      className={`text-lg md:text-xl transition-colors drop-shadow-sm ${
+                        isEarned ? 'text-amber-400 font-bold' : 'text-slate-300'
+                      }`}
+                    >
+                      ★
+                    </span>
+                    {isEarned && (
+                      <motion.div
+                        className="absolute inset-0 text-amber-500 scale-125 opacity-20 blur-xs animate-spin-slow"
+                      >
+                        ★
+                      </motion.div>
+                    )}
                   </motion.div>
-                )}
-              </motion.div>
-            );
-          })}
-        </div>
-      </div>
+                );
+              })}
+            </div>
+          </div>
 
-      {/* 2. Teddy Bear (Bunny) Area */}
-      <div className="my-2 md:my-4 flex flex-col items-center justify-center relative">
-        <TeddyBear state={teddyState} />
-        
-        {/* Subtle cloud feedback dialog bubble */}
-        <div className="absolute top-0 right-0 sm:right-6 bg-white border-2 border-purple-200 p-2.5 rounded-2xl max-w-[130px] shadow-sm transform translate-y-4 scale-90 sm:scale-100">
-          <p className="text-3xs text-center leading-normal text-purple-800 font-extrabold uppercase">
-            {teddyState === 'correct' ? '¡SÚPER!' : teddyState === 'incorrect' ? 'INTENTA DE NUEVO' : '¿JUGAMOS?'}
-          </p>
-        </div>
-      </div>
-
-      {/* 3. Speech Bubble & Bold Buttons Interface */}
-      <div className="space-y-6 w-full mt-2">
+          {/* 3. Speech Bubble & Bold Buttons Interface */}
+          <div className="space-y-6 w-full mt-2">
         {/* High-contrast Speech Bubble from the Bold Typography Theme */}
         <div className="bg-white p-5 px-6 rounded-[35px] shadow-lg border-2 border-pink-100 relative">
           <div className="absolute -bottom-3 left-1/2 -translate-x-1/2 w-6 h-6 bg-white rotate-45 border-r-2 border-b-2 border-pink-100"></div>
@@ -342,41 +333,42 @@ export default function ReadingGame({ vowelLevel, difficulty = 'easy', onChangeV
           </p>
         </div>
 
-        <div className={`grid ${getGridColsClass()} gap-5 pt-3`}>
-          <AnimatePresence mode="popLayout">
-            {choices.map((choice) => {
-              const isDisabled = disabledButtons[choice.text];
-              return (
-                <motion.div
-                  key={choice.key}
-                  initial={{ opacity: 1, scale: 0.95 }}
-                  animate={
-                    isDisabled
-                      ? { opacity: 0.25, scale: 0.85, pointerEvents: 'none' }
-                      : { opacity: 1, scale: 1 }
-                  }
-                  exit={{ opacity: 0, scale: 0.8 }}
-                  transition={{ type: 'spring', damping: 12 }}
-                  className="w-full relative"
-                >
-                  <button
-                    onClick={() => handleSyllableClick(choice.text, choice.isCorrect)}
-                    disabled={isDisabled || isAnswering}
-                    className="w-full py-8 md:py-12 bg-white border-b-[12px] border-slate-200 hover:border-b-[14px] rounded-[2.5rem] md:rounded-[3rem] shadow-xl flex items-center justify-center transition-all hover:scale-105 active:border-b-0 active:translate-y-2 group cursor-pointer select-none"
-                    style={{
-                      fontFamily: '"Fredoka", "Arial Rounded MT Bold", sans-serif',
-                    }}
-                  >
-                    <span className={`${getTextSizeClass()} font-black font-sans text-slate-900 group-hover:text-pink-500 transition-colors tracking-tight`}>
-                      {choice.text}
-                    </span>
-                  </button>
-                </motion.div>
-              );
-            })}
-          </AnimatePresence>
+            <div className={`grid ${getGridColsClass()} gap-5 pt-3`}>
+              <AnimatePresence mode="popLayout">
+                {choices.map((choice) => {
+                  const isDisabled = disabledButtons[choice.text];
+                  return (
+                    <motion.div
+                      key={choice.key}
+                      initial={{ opacity: 1, scale: 0.95 }}
+                      animate={
+                        isDisabled
+                          ? { opacity: 0.25, scale: 0.85, pointerEvents: 'none' }
+                          : { opacity: 1, scale: 1 }
+                      }
+                      exit={{ opacity: 0, scale: 0.8 }}
+                      transition={{ type: 'spring', damping: 12 }}
+                      className="w-full relative"
+                    >
+                      <button
+                        onClick={() => handleSyllableClick(choice.text, choice.isCorrect)}
+                        disabled={isDisabled || isAnswering}
+                        className="w-full py-8 md:py-12 bg-white border-b-[12px] border-slate-200 hover:border-b-[14px] rounded-[2.5rem] md:rounded-[3rem] shadow-xl flex items-center justify-center transition-all hover:scale-105 active:border-b-0 active:translate-y-2 group cursor-pointer select-none"
+                        style={{
+                          fontFamily: '"Fredoka", "Arial Rounded MT Bold", sans-serif',
+                        }}
+                      >
+                        <span className={`${getTextSizeClass()} font-black font-sans text-slate-900 group-hover:text-pink-500 transition-colors tracking-tight`}>
+                          {choice.text}
+                        </span>
+                      </button>
+                    </motion.div>
+                  );
+                })}
+              </AnimatePresence>
+            </div>
+          </div>
         </div>
-      </div>
     </div>
   );
 }

@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Settings, Play, Music, Volume2, Sparkles, Heart } from 'lucide-react';
 import CastleBackground from './components/CastleBackground';
@@ -7,6 +7,7 @@ import SyllabicSynthesisGame from './components/SyllabicSynthesisGame';
 import FriendsAnimation from './components/FriendsAnimation';
 import ColoringGame from './components/ColoringGame';
 import AudioSettings from './components/AudioSettings';
+import TeddyBear, { TeddyBearState } from './components/TeddyBear';
 import { getAllAudios } from './utils/audioDb';
 
 export default function App() {
@@ -18,6 +19,7 @@ export default function App() {
   const [showSettings, setShowSettings] = useState<boolean>(false);
   const [ambientMelody, setAmbientMelody] = useState<boolean>(false);
   const [voices, setVoices] = useState<SpeechSynthesisVoice[]>([]);
+  const [teddyState, setTeddyState] = useState<TeddyBearState>('welcoming');
 
   // Audio elements ref for ambient backup music if requested
   const ambientAudioRef = useRef<HTMLAudioElement | null>(null);
@@ -34,7 +36,7 @@ export default function App() {
       };
       // Try loading voices immediately
       updateVoices();
-      
+
       // Chrome/Safari load voices asynchronously and trigger this event
       window.speechSynthesis.onvoiceschanged = updateVoices;
     }
@@ -178,10 +180,11 @@ export default function App() {
         // Silent error handling
       }
     }
+    setTeddyState('welcoming');
     setCurrentMode('playing');
   };
 
-  const handleBackToGame = () => {
+  const handleBackToGame = useCallback(() => {
     // Advance vowel level in a nice loop (A -> E -> I -> O -> U)
     setVowelLevel((prev) => {
       const order: ('A' | 'E' | 'I' | 'O' | 'U')[] = ['A', 'E', 'I', 'O', 'U'];
@@ -189,17 +192,29 @@ export default function App() {
       return order[nextIdx];
     });
     setCurrentMode('welcome');
-  };
+  }, []);
+
+  const handleLevelComplete = useCallback(() => {
+    setCurrentMode('reward_dance');
+  }, []);
+
+  const handleBackToMenu = useCallback(() => {
+    setCurrentMode('welcome');
+  }, []);
+
+  const handleColoring = useCallback(() => {
+    setCurrentMode('coloring');
+  }, []);
 
   return (
     <div className="relative min-h-screen flex flex-col font-sans text-slate-800 antialiased overflow-x-hidden selection:bg-pink-200">
-      
+
       {/* Background stays persistent and smooth */}
       <CastleBackground />
 
       {/* Main Container Layout */}
-      <main className="flex-1 flex flex-col items-center justify-center p-4 min-h-screen relative z-10 w-full">
-        
+      <main className={`flex-1 flex flex-col ${currentMode === 'playing' ? 'items-start justify-start' : 'items-center justify-center'} p-4 min-h-screen relative z-10 w-full`}>
+
         {/* Render child or welcome screen depending on State */}
         <AnimatePresence mode="wait">
           {currentMode === 'welcome' && (
@@ -236,11 +251,10 @@ export default function App() {
                 <div className="grid grid-cols-2 gap-3.5">
                   <button
                     onClick={() => setGameMode('reading')}
-                    className={`p-3 flex flex-col items-center justify-center rounded-3xl transition cursor-pointer select-none border-2 active:scale-95 ${
-                      gameMode === 'reading'
-                        ? 'bg-purple-100/60 border-purple-400 text-purple-950 font-black shadow-sm'
-                        : 'bg-white hover:bg-slate-50 border-slate-200 text-slate-600'
-                    }`}
+                    className={`p-3 flex flex-col items-center justify-center rounded-3xl transition cursor-pointer select-none border-2 active:scale-95 ${gameMode === 'reading'
+                      ? 'bg-purple-100/60 border-purple-400 text-purple-950 font-black shadow-sm'
+                      : 'bg-white hover:bg-slate-50 border-slate-200 text-slate-600'
+                      }`}
                   >
                     <span className="text-3xl mb-1">🔍</span>
                     <span className="font-extrabold text-2xs uppercase tracking-wide">BUSCAR SÍLABAS</span>
@@ -248,11 +262,10 @@ export default function App() {
                   </button>
                   <button
                     onClick={() => setGameMode('synthesis')}
-                    className={`p-3 flex flex-col items-center justify-center rounded-3xl transition cursor-pointer select-none border-2 active:scale-95 ${
-                      gameMode === 'synthesis'
-                        ? 'bg-purple-100/60 border-purple-400 text-purple-950 font-black shadow-sm'
-                        : 'bg-white hover:bg-slate-50 border-slate-200 text-slate-600'
-                    }`}
+                    className={`p-3 flex flex-col items-center justify-center rounded-3xl transition cursor-pointer select-none border-2 active:scale-95 ${gameMode === 'synthesis'
+                      ? 'bg-purple-100/60 border-purple-400 text-purple-950 font-black shadow-sm'
+                      : 'bg-white hover:bg-slate-50 border-slate-200 text-slate-600'
+                      }`}
                   >
                     <span className="text-3xl mb-1">🧩</span>
                     <span className="font-extrabold text-2xs uppercase tracking-wide">ARMAR PALABRAS</span>
@@ -275,11 +288,10 @@ export default function App() {
                           <button
                             key={vowel}
                             onClick={() => setVowelLevel(vowel)}
-                            className={`w-11 h-11 flex items-center justify-center font-black text-lg rounded-2xl transition cursor-pointer select-none active:scale-95 ${
-                              isSelected
-                                ? 'bg-rose-500 text-white shadow-[0_4px_0_#BE123C] scale-105 border-0'
-                                : 'bg-white hover:bg-slate-50 text-slate-700 border-2 border-slate-200/80 shadow-sm'
-                            }`}
+                            className={`w-11 h-11 flex items-center justify-center font-black text-lg rounded-2xl transition cursor-pointer select-none active:scale-95 ${isSelected
+                              ? 'bg-rose-500 text-white shadow-[0_4px_0_#BE123C] scale-105 border-0'
+                              : 'bg-white hover:bg-slate-50 text-slate-700 border-2 border-slate-200/80 shadow-sm'
+                              }`}
                           >
                             {vowel}
                           </button>
@@ -306,11 +318,10 @@ export default function App() {
                           <button
                             key={level}
                             onClick={() => setDifficulty(level)}
-                            className={`py-3 flex flex-col items-center justify-center rounded-2xl transition cursor-pointer select-none border-2 active:scale-95 ${
-                              isSelected
-                                ? 'bg-rose-500/20 border-rose-400 text-rose-900 font-black shadow-sm'
-                                : 'bg-white hover:bg-slate-50 border-slate-200/80 text-slate-600'
-                            }`}
+                            className={`py-3 flex flex-col items-center justify-center rounded-2xl transition cursor-pointer select-none border-2 active:scale-95 ${isSelected
+                              ? 'bg-rose-500/20 border-rose-400 text-rose-900 font-black shadow-sm'
+                              : 'bg-white hover:bg-slate-50 border-slate-200/80 text-slate-600'
+                              }`}
                           >
                             <span className="text-2xl mb-1">{icon}</span>
                             <span className="text-xs font-black uppercase">{label}</span>
@@ -387,27 +398,47 @@ export default function App() {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              className="w-full flex justify-center"
+              className="w-full flex items-start justify-center min-h-screen px-4"
             >
-              {gameMode === 'reading' ? (
-                <ReadingGame
-                  key={vowelLevel}
-                  vowelLevel={vowelLevel}
-                  difficulty={difficulty}
-                  onChangeVowel={setVowelLevel}
-                  customVoices={customVoices}
-                  onLevelComplete={() => setCurrentMode('reward_dance')}
-                  playAudioPrompt={playAudioPrompt}
-                  onBackToMenu={() => setCurrentMode('welcome')}
-                />
-              ) : (
-                <SyllabicSynthesisGame
-                  customVoices={customVoices}
-                  onLevelComplete={() => setCurrentMode('reward_dance')}
-                  playAudioPrompt={playAudioPrompt}
-                  onBackToMenu={() => setCurrentMode('welcome')}
-                />
-              )}
+              {/* Bunny + Game container as a flex row unit */}
+              <div className="flex items-start gap-6 pt-4">
+                {/* Bunny guide - left side, sticky */}
+                <div className="hidden lg:flex flex-shrink-0 flex-col items-center sticky top-20 self-start">
+                  <TeddyBear state={teddyState} />
+                  <div className="mt-2 bg-white border-2 border-purple-200 p-2.5 rounded-2xl max-w-[130px] shadow-sm">
+                    <p className="text-xs text-center text-purple-800 font-extrabold uppercase">
+                      {teddyState === 'correct' ? '¡SÚPER!' : teddyState === 'incorrect' ? 'INTENTA DE NUEVO' : '¿JUGAMOS?'}
+                    </p>
+                  </div>
+                </div>
+
+                {/* Game content - right side */}
+                <div className="flex-1 flex justify-center">
+                  {gameMode === 'reading' ? (
+                    <ReadingGame
+                      key={vowelLevel}
+                      vowelLevel={vowelLevel}
+                      difficulty={difficulty}
+                      onChangeVowel={setVowelLevel}
+                      customVoices={customVoices}
+                      onLevelComplete={handleLevelComplete}
+                      playAudioPrompt={playAudioPrompt}
+                      onBackToMenu={handleBackToMenu}
+                      teddyState={teddyState}
+                      setTeddyState={setTeddyState}
+                    />
+                  ) : (
+                    <SyllabicSynthesisGame
+                      customVoices={customVoices}
+                      onLevelComplete={handleLevelComplete}
+                      playAudioPrompt={playAudioPrompt}
+                      onBackToMenu={handleBackToMenu}
+                      teddyState={teddyState}
+                      setTeddyState={setTeddyState}
+                    />
+                  )}
+                </div>
+              </div>
             </motion.div>
           )}
 
@@ -420,7 +451,7 @@ export default function App() {
               className="absolute inset-0 w-full h-full"
             >
               <FriendsAnimation
-                onAnimationEnd={() => setCurrentMode('coloring')}
+                onAnimationEnd={handleColoring}
                 playAudioPrompt={playAudioPrompt}
               />
             </motion.div>

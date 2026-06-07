@@ -1,7 +1,7 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useMemo } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Sparkles, ArrowLeft, RotateCcw } from 'lucide-react';
-import TeddyBear from './TeddyBear';
+import { TeddyBearState } from './TeddyBear';
 import WordTypingChallenge from './WordTypingChallenge';
 
 interface SyllabicSynthesisGameProps {
@@ -9,6 +9,8 @@ interface SyllabicSynthesisGameProps {
   onLevelComplete: () => void;
   playAudioPrompt: (text: string, id: string) => Promise<void>;
   onBackToMenu: () => void;
+  teddyState: TeddyBearState;
+  setTeddyState: (state: TeddyBearState) => void;
 }
 
 interface WordData {
@@ -260,13 +262,14 @@ export default function SyllabicSynthesisGame({
   onLevelComplete,
   playAudioPrompt,
   onBackToMenu,
+  teddyState,
+  setTeddyState,
 }: SyllabicSynthesisGameProps) {
   // Game states
   const [currentWordIndex, setCurrentWordIndex] = useState<number>(0);
   const [choices, setChoices] = useState<{ text: string; initialIndex: number; key: number }[]>([]);
   const [placedIndices, setPlacedIndices] = useState<number[]>([]); // Indexes of syllables placed successfully (e.g. [0, 1])
   const [disabledButtons, setDisabledButtons] = useState<Record<number, boolean>>({}); // Key -> disabled
-  const [teddyState, setTeddyState] = useState<'idle' | 'talking' | 'correct' | 'incorrect' | 'welcoming'>('welcoming');
   const [bubbleText, setBubbleText] = useState<string>('');
   const [isAnswering, setIsAnswering] = useState<boolean>(false);
   const [shakingId, setShakingId] = useState<number | null>(null); // Track key of wrong syllable shaking
@@ -274,16 +277,27 @@ export default function SyllabicSynthesisGame({
   const [showTypingChallenge, setShowTypingChallenge] = useState<boolean>(false); // Show typing challenge after word completion
 
   const welcomeFired = useRef<boolean>(false);
-  const activeWord = WORDS_DATABASE[currentWordIndex] || WORDS_DATABASE[0];
+
+  // Randomize word order once on component mount
+  const shuffledWords = useMemo(() => {
+    const arr = [...WORDS_DATABASE];
+    for (let i = arr.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [arr[i], arr[j]] = [arr[j], arr[i]];
+    }
+    return arr;
+  }, []);
+
+  const activeWord = shuffledWords[currentWordIndex] || shuffledWords[0];
 
   // Initiate current word
   useEffect(() => {
-    if (currentWordIndex < WORDS_DATABASE.length) {
+    if (currentWordIndex < shuffledWords.length) {
       initiateWord(currentWordIndex);
     } else {
       onLevelComplete();
     }
-  }, [currentWordIndex]);
+  }, [currentWordIndex, shuffledWords.length, onLevelComplete]);
 
   const initiateWord = async (wordIndex: number) => {
     setIsAnswering(false);
@@ -292,7 +306,7 @@ export default function SyllabicSynthesisGame({
     setDisabledButtons({});
     setShakingId(null);
 
-    const targetWord = WORDS_DATABASE[wordIndex];
+    const targetWord = shuffledWords[wordIndex];
     const scrambled = scrambleSyllables(targetWord.syllables);
     setChoices(scrambled);
 
@@ -429,7 +443,7 @@ export default function SyllabicSynthesisGame({
   const handleTypingComplete = () => {
     setShowTypingChallenge(false);
     setIsFused(false);
-    if (currentWordIndex + 1 < WORDS_DATABASE.length) {
+    if (currentWordIndex + 1 < shuffledWords.length) {
       setCurrentWordIndex((prev) => prev + 1);
     } else {
       onLevelComplete();
@@ -439,7 +453,7 @@ export default function SyllabicSynthesisGame({
   // Skip / Manual Next word (useful shortcut or parent helper)
   const handleNextWordSkip = () => {
     if (isAnswering || isFused) return;
-    if (currentWordIndex + 1 < WORDS_DATABASE.length) {
+    if (currentWordIndex + 1 < shuffledWords.length) {
       setCurrentWordIndex((prev) => prev + 1);
     } else {
       onLevelComplete();
@@ -466,6 +480,8 @@ export default function SyllabicSynthesisGame({
         emoji={activeWord.emoji}
         onComplete={handleTypingComplete}
         playAudioPrompt={playAudioPrompt}
+        teddyState={teddyState}
+        setTeddyState={setTeddyState}
       />
     );
   }
@@ -514,10 +530,10 @@ export default function SyllabicSynthesisGame({
       {/* 1. Progress Indicators (Stars represent completed words) */}
       <div className="bg-white/90 p-3 rounded-2xl shadow-sm border border-purple-100 flex flex-col items-center gap-1.5">
         <div className="text-2xs text-purple-700 font-extrabold uppercase tracking-widest text-center">
-          PALABRA {currentWordIndex + 1} DE {WORDS_DATABASE.length} • COMPLETA TODAS PARA BAILAR
+          PALABRA {currentWordIndex + 1} DE {shuffledWords.length} • COMPLETA TODAS PARA BAILAR
         </div>
         <div className="flex items-center justify-center gap-1 w-full flex-wrap px-2">
-          {WORDS_DATABASE.map((w, idx) => {
+          {shuffledWords.map((w, idx) => {
             const isCompleted = idx < currentWordIndex;
             const isCurrent = idx === currentWordIndex;
             return (
@@ -550,25 +566,11 @@ export default function SyllabicSynthesisGame({
         </div>
       </div>
 
-      {/* 2. Central Active Illustration Card & Bunny Area */}
-      <div className="my-3 md:my-5 grid grid-cols-5 items-center gap-3 w-full pr-1">
-        
-        {/* Bunny Guide on left (2 columns) */}
-        <div className="col-span-2 flex flex-col items-center relative">
-          <div className="scale-85 md:scale-95">
-            <TeddyBear state={teddyState} />
-          </div>
-          
-          {/* Bunny little bubble text */}
-          <div className="absolute top-1 right-1 bg-white border-2 border-purple-200 p-2.5 rounded-2xl max-w-[100px] shadow-sm transform translate-y-2 scale-85 md:scale-90">
-            <p className="text-4xs text-center leading-normal text-purple-800 font-black uppercase">
-              {isFused ? '¡GENIAL!' : teddyState === 'correct' ? '¡SÍ!' : teddyState === 'incorrect' ? '¡CASI!' : '¡MIRA!'}
-            </p>
-          </div>
-        </div>
+      {/* 2. Central Active Illustration Card */}
+      <div className="my-3 md:my-5 flex justify-center">
 
-        {/* Word Clue Banner on right (3 columns) */}
-        <div className="col-span-3 h-full flex flex-col justify-center items-center">
+        {/* Word Clue Banner */}
+        <div className="h-full flex flex-col justify-center items-center">
           <motion.div
             key={activeWord.id}
             initial={{ opacity: 0, scale: 0.8, y: 15 }}
@@ -673,6 +675,7 @@ export default function SyllabicSynthesisGame({
             );
           })}
         </div>
+
       </div>
 
       {/* 4. Speech Bubble & Tap-to-Place Syllables Option Buttons */}
