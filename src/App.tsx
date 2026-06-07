@@ -13,6 +13,7 @@ export default function App() {
   const [currentMode, setCurrentMode] = useState<'welcome' | 'playing' | 'reward_dance' | 'coloring'>('welcome');
   const [gameMode, setGameMode] = useState<'reading' | 'synthesis'>('reading');
   const [vowelLevel, setVowelLevel] = useState<'A' | 'E' | 'I' | 'O' | 'U'>('A');
+  const [difficulty, setDifficulty] = useState<'easy' | 'medium' | 'hard'>('easy');
   const [customVoices, setCustomVoices] = useState<Record<string, string>>({}); // id -> blobUrl
   const [showSettings, setShowSettings] = useState<boolean>(false);
   const [ambientMelody, setAmbientMelody] = useState<boolean>(false);
@@ -287,6 +288,39 @@ export default function App() {
                     </div>
                   </div>
 
+                  {/* Difficulty selection bar */}
+                  <div className="bg-purple-50/50 border border-purple-100 rounded-3xl p-4.5 mb-6 space-y-2.5">
+                    <p className="text-xs font-black text-purple-700 uppercase tracking-widest text-center">
+                      ¿QUÉ NIVEL DE DIFICULTAD?
+                    </p>
+                    <div className="grid grid-cols-3 gap-2">
+                      {(['easy', 'medium', 'hard'] as const).map((level) => {
+                        const isSelected = difficulty === level;
+                        const labels = {
+                          'easy': { label: 'FÁCIL', icon: '😊', desc: '2 SÍLABAS' },
+                          'medium': { label: 'MEDIO', icon: '🎯', desc: '4 SÍLABAS' },
+                          'hard': { label: 'DIFÍCIL', icon: '⭐', desc: '8 SÍLABAS' }
+                        };
+                        const { label, icon, desc } = labels[level];
+                        return (
+                          <button
+                            key={level}
+                            onClick={() => setDifficulty(level)}
+                            className={`py-3 flex flex-col items-center justify-center rounded-2xl transition cursor-pointer select-none border-2 active:scale-95 ${
+                              isSelected
+                                ? 'bg-rose-500/20 border-rose-400 text-rose-900 font-black shadow-sm'
+                                : 'bg-white hover:bg-slate-50 border-slate-200/80 text-slate-600'
+                            }`}
+                          >
+                            <span className="text-2xl mb-1">{icon}</span>
+                            <span className="text-xs font-black uppercase">{label}</span>
+                            <span className="text-[9px] text-slate-500 font-bold mt-0.5">{desc}</span>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+
                   {/* Character Intro Badge */}
                   <div className="bg-pink-50/70 border border-pink-100 rounded-3xl p-5 mb-6 flex items-center gap-4 text-left">
                     <div className="text-4xl">🐰</div>
@@ -359,10 +393,12 @@ export default function App() {
                 <ReadingGame
                   key={vowelLevel}
                   vowelLevel={vowelLevel}
+                  difficulty={difficulty}
                   onChangeVowel={setVowelLevel}
                   customVoices={customVoices}
                   onLevelComplete={() => setCurrentMode('reward_dance')}
                   playAudioPrompt={playAudioPrompt}
+                  onBackToMenu={() => setCurrentMode('welcome')}
                 />
               ) : (
                 <SyllabicSynthesisGame

@@ -1,15 +1,17 @@
 import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { Sparkles } from 'lucide-react';
+import { Sparkles, ArrowLeft } from 'lucide-react';
 import TeddyBear from './TeddyBear';
 import { Syllable } from '../types';
 
 interface ReadingGameProps {
   key?: string | number;
   vowelLevel: 'A' | 'E' | 'I' | 'O' | 'U';
+  difficulty?: 'easy' | 'medium' | 'hard';
   onChangeVowel: (vowel: 'A' | 'E' | 'I' | 'O' | 'U') => void;
   customVoices: Record<string, string>;
   onLevelComplete: () => void;
+  onBackToMenu?: () => void;
   playAudioPrompt: (text: string, id: string) => Promise<void>;
 }
 
@@ -60,7 +62,7 @@ const CONSONANT_NAMES_TTS: Record<string, string> = {
   'T': 'te', 'V': 've', 'W': 'doble ve', 'X': 'equis', 'Y': 'ye', 'Z': 'zeta'
 };
 
-export default function ReadingGame({ vowelLevel, onChangeVowel, customVoices, onLevelComplete, playAudioPrompt }: ReadingGameProps) {
+export default function ReadingGame({ vowelLevel, difficulty = 'easy', onChangeVowel, customVoices, onLevelComplete, onBackToMenu, playAudioPrompt }: ReadingGameProps) {
   const listaSilabasActive = SILLABAS_POR_NIVEL[vowelLevel] || LISTA_SILABAS_A;
   const [currentStep, setCurrentStep] = useState<number>(0);
   const [choices, setChoices] = useState<{ text: string; isCorrect: boolean; key: number }[]>([]);
@@ -70,6 +72,24 @@ export default function ReadingGame({ vowelLevel, onChangeVowel, customVoices, o
   const [bubbleText, setBubbleText] = useState<string>('¡HOLA PRINCESA!\n¡VAMOS A JUGAR!');
 
   const welcomeFired = useRef<boolean>(false);
+
+  const getNumDistracters = (): number => {
+    switch (difficulty) {
+      case 'easy': return 1;
+      case 'medium': return 3;
+      case 'hard': return 7;
+      default: return 1;
+    }
+  };
+
+  const getGridColsClass = (): string => {
+    switch (difficulty) {
+      case 'easy': return 'grid-cols-2';
+      case 'medium': return 'grid-cols-2';
+      case 'hard': return 'grid-cols-4';
+      default: return 'grid-cols-2';
+    }
+  };
 
   // Initiate a new turn when currentStep changes
   useEffect(() => {
@@ -107,19 +127,31 @@ export default function ReadingGame({ vowelLevel, onChangeVowel, customVoices, o
     setDisabledButtons({});
 
     const correctSyllable = listaSilabasActive[stepIndex];
-    
-    // Choose distractor
+    const numDistracters = getNumDistracters();
+
+    // Generate distractors
     const options = listaSilabasActive;
     const candidates = options.filter(s => s !== correctSyllable);
-    const distractor = candidates[Math.floor(Math.random() * candidates.length)];
+    const distractors: Syllable[] = [];
+    const selectedSet = new Set<Syllable>([correctSyllable]);
+
+    for (let i = 0; i < numDistracters && candidates.length > selectedSet.size - 1; i++) {
+      let distractor = candidates[Math.floor(Math.random() * candidates.length)];
+      while (selectedSet.has(distractor)) {
+        distractor = candidates[Math.floor(Math.random() * candidates.length)];
+      }
+      distractors.push(distractor);
+      selectedSet.add(distractor);
+    }
 
     // Shuffle choices
     const items = [
       { text: correctSyllable, isCorrect: true, key: Math.random() },
-      { text: distractor, isCorrect: false, key: Math.random() },
+      ...distractors.map(d => ({ text: d, isCorrect: false, key: Math.random() })),
     ];
-    if (Math.random() > 0.5) {
-      items.reverse();
+    for (let i = items.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [items[i], items[j]] = [items[j], items[i]];
     }
     setChoices(items);
 
@@ -191,7 +223,18 @@ export default function ReadingGame({ vowelLevel, onChangeVowel, customVoices, o
 
   return (
     <div className="flex-1 flex flex-col justify-between p-4 md:p-6 w-full max-w-lg mx-auto relative select-none">
-      
+
+      {/* Back to Menu Button */}
+      {onBackToMenu && (
+        <button
+          onClick={onBackToMenu}
+          className="absolute top-4 left-4 p-2.5 bg-white/90 hover:bg-white text-slate-700 font-bold border-2 border-slate-200 hover:border-slate-300 rounded-xl shadow transition cursor-pointer flex items-center gap-1.5 text-xs z-20"
+        >
+          <ArrowLeft className="w-4 h-4" />
+          <span className="hidden sm:inline">INICIO</span>
+        </button>
+      )}
+
       {/* 0. Vocal Level Switcher Tabs */}
       <div className="flex gap-1.5 justify-center mb-3 flex-wrap">
         {(['A', 'E', 'I', 'O', 'U'] as const).map((vowel) => {
@@ -274,7 +317,7 @@ export default function ReadingGame({ vowelLevel, onChangeVowel, customVoices, o
           </p>
         </div>
 
-        <div className="grid grid-cols-2 gap-5 pt-3">
+        <div className={`grid ${getGridColsClass()} gap-5 pt-3`}>
           <AnimatePresence mode="popLayout">
             {choices.map((choice) => {
               const isDisabled = disabledButtons[choice.text];
