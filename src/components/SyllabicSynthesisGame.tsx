@@ -387,15 +387,16 @@ export default function SyllabicSynthesisGame({
         // Show typing challenge instead of advancing immediately
         setShowTypingChallenge(true);
       } else {
-        // Prompt for the next syllable
+        // Prompt for the next syllable (fire-and-forget to allow immediate user interaction)
         const nextSyllableToFind = activeWord.syllables[newPlaced.length];
         setBubbleText(`SÍLABA CORRECTA.\n\n¿QUÉ SÍLABA SIGUE AHORA?`);
-        
-        await playAudioPrompt(
+
+        // Fire-and-forget: play prompt in background
+        playAudioPrompt(
           `¡Eso suena súper! Ahora, ¿qué sílaba sigue? Busca la sílaba... ${nextSyllableToFind.toLowerCase()}.`,
           `synthesis_next_${nextSyllableToFind}`
         );
-        
+
         setTeddyState('idle');
         setIsAnswering(false);
       }
