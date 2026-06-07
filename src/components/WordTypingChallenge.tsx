@@ -17,6 +17,8 @@ export default function WordTypingChallenge({
   const [typedLetters, setTypedLetters] = useState<string[]>([]);
   const [isShaking, setIsShaking] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
+  const pendingNRef = useRef(false);
+  const pendingNTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
     // Auto-focus input to open native keyboard
@@ -24,25 +26,20 @@ export default function WordTypingChallenge({
 
     // Play intro audio
     playAudioPrompt(`Ahora escribe la palabra ${word.toLowerCase()}.`, `typing_intro_${word}`);
+
+    // Cleanup timeout on unmount
+    return () => {
+      if (pendingNTimeoutRef.current) {
+        clearTimeout(pendingNTimeoutRef.current);
+      }
+    };
   }, [word, playAudioPrompt]);
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const lastChar = e.target.value.toUpperCase().slice(-1);
-
-    // Cancel any ongoing speech to prioritize user action
-    if ('speechSynthesis' in window) {
-      window.speechSynthesis.cancel();
-    }
-
-    // Reset input for next character
-    e.target.value = '';
-
-    if (!lastChar || lastChar === ' ') return;
-
+  const handleLetterPress = (charToAdd: string) => {
     const expected = word[typedLetters.length];
 
-    if (lastChar === expected) {
-      const nextLetters = [...typedLetters, lastChar];
+    if (charToAdd === expected) {
+      const nextLetters = [...typedLetters, charToAdd];
       setTypedLetters(nextLetters);
 
       // Check if word is complete
@@ -61,6 +58,57 @@ export default function WordTypingChallenge({
       setIsShaking(true);
       setTimeout(() => setIsShaking(false), 400);
     }
+  };
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const lastChar = e.target.value.toUpperCase().slice(-1);
+
+    // Cancel any ongoing speech to prioritize user action
+    if ('speechSynthesis' in window) {
+      window.speechSynthesis.cancel();
+    }
+
+    // Reset input for next character
+    e.target.value = '';
+
+    if (!lastChar || lastChar === ' ') return;
+
+    // Handle double-N to Ñ conversion
+    if (lastChar === 'N') {
+      if (pendingNRef.current) {
+        // Second N pressed within timeout window — convert to Ñ
+        if (pendingNTimeoutRef.current) {
+          clearTimeout(pendingNTimeoutRef.current);
+        }
+        pendingNRef.current = false;
+        handleLetterPress('Ñ');
+      } else {
+        // First N pressed — wait for potential second N
+        pendingNRef.current = true;
+        if (pendingNTimeoutRef.current) {
+          clearTimeout(pendingNTimeoutRef.current);
+        }
+        // 300ms window to press N again, otherwise confirm the first N
+        pendingNTimeoutRef.current = setTimeout(() => {
+          if (pendingNRef.current) {
+            handleLetterPress('N');
+            pendingNRef.current = false;
+          }
+        }, 300);
+      }
+      return;
+    }
+
+    // If there was a pending N and a different letter is pressed, confirm the N first
+    if (pendingNRef.current) {
+      if (pendingNTimeoutRef.current) {
+        clearTimeout(pendingNTimeoutRef.current);
+      }
+      handleLetterPress('N');
+      pendingNRef.current = false;
+    }
+
+    handleLetterPress(lastChar);
   };
 
   return (
