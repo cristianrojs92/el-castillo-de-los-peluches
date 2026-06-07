@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Sparkles, ArrowLeft, RotateCcw } from 'lucide-react';
 import TeddyBear from './TeddyBear';
+import WordTypingChallenge from './WordTypingChallenge';
 
 interface SyllabicSynthesisGameProps {
   customVoices: Record<string, string>;
@@ -270,6 +271,7 @@ export default function SyllabicSynthesisGame({
   const [isAnswering, setIsAnswering] = useState<boolean>(false);
   const [shakingId, setShakingId] = useState<number | null>(null); // Track key of wrong syllable shaking
   const [isFused, setIsFused] = useState<boolean>(false); // True when current word is fused and Celebrating
+  const [showTypingChallenge, setShowTypingChallenge] = useState<boolean>(false); // Show typing challenge after word completion
 
   const welcomeFired = useRef<boolean>(false);
   const activeWord = WORDS_DATABASE[currentWordIndex] || WORDS_DATABASE[0];
@@ -341,10 +343,12 @@ export default function SyllabicSynthesisGame({
 
       // Soft positive chime and speak syllable
       await playAudioPrompt('¡SÍ!', 'correct_generic');
-      
+
       const syllableLower = item.text.toLowerCase();
       setBubbleText(`¡EXCELENTE!\n\nPUSISTE "${item.text}"`);
-      await playAudioPrompt(`Pusiste la sílaba ${syllableLower}. ¡Muy bien!`, `synthesis_success_${item.text}`);
+
+      // Fire-and-forget: play long audio in background without waiting
+      playAudioPrompt(`Pusiste la sílaba ${syllableLower}. ¡Muy bien!`, `synthesis_success_${item.text}`);
 
       // Check if word completed
       if (newPlaced.length === activeWord.syllables.length) {
@@ -372,15 +376,10 @@ export default function SyllabicSynthesisGame({
         await playAudioPrompt('¡LO LOGRASTE!', 'victory');
         await playAudioPrompt(spellingTts, `synthesis_complete_${activeWord.id}`);
 
-        await new Promise((r) => setTimeout(r, 1200));
+        await new Promise((r) => setTimeout(r, 800));
 
-        // Advance to next word
-        if (currentWordIndex + 1 < WORDS_DATABASE.length) {
-          setCurrentWordIndex((prev) => prev + 1);
-        } else {
-          // Finished all words, complete the whole level!
-          onLevelComplete();
-        }
+        // Show typing challenge instead of advancing immediately
+        setShowTypingChallenge(true);
       } else {
         // Prompt for the next syllable
         const nextSyllableToFind = activeWord.syllables[newPlaced.length];
@@ -419,6 +418,17 @@ export default function SyllabicSynthesisGame({
     }
   };
 
+  // Handle completion of typing challenge
+  const handleTypingComplete = () => {
+    setShowTypingChallenge(false);
+    setIsFused(false);
+    if (currentWordIndex + 1 < WORDS_DATABASE.length) {
+      setCurrentWordIndex((prev) => prev + 1);
+    } else {
+      onLevelComplete();
+    }
+  };
+
   // Skip / Manual Next word (useful shortcut or parent helper)
   const handleNextWordSkip = () => {
     if (isAnswering || isFused) return;
@@ -441,9 +451,21 @@ export default function SyllabicSynthesisGame({
     );
   };
 
+  // Show typing challenge when a word is completed
+  if (showTypingChallenge) {
+    return (
+      <WordTypingChallenge
+        word={activeWord.word}
+        emoji={activeWord.emoji}
+        onComplete={handleTypingComplete}
+        playAudioPrompt={playAudioPrompt}
+      />
+    );
+  }
+
   return (
     <div className="flex-1 flex flex-col justify-between p-4 md:p-6 w-full max-w-lg mx-auto relative select-none">
-      
+
       {/* 0. Top Bar Actions */}
       <div className="flex items-center justify-between gap-2 mb-3">
         <button
