@@ -25,6 +25,9 @@ const BASE_TRACKS: AudioTrackItem[] = [
   { id: 'incorrect_is', label: 'EXPLICACIÓN DE ERROR (PARTE 1)', defaultText: 'ESA SÍLABA QUE TOCASTE ES...', category: 'feedback' },
   { id: 'incorrect_find', label: 'EXPLICACIÓN DE ERROR (PARTE 2)', defaultText: '...PERO ESTAMOS BUSCANDO LA SÍLABA...', category: 'feedback' },
   { id: 'victory', label: 'PREMIO DE PINTURA', defaultText: '¡LO LOGRASTE! COMO PREMIO, ¡VAMOS A PINTAR!', category: 'gameplay' },
+  { id: 'article_intro', label: 'SOCIOS MÁGICOS: PRESENTACIÓN', defaultText: '¡MIREN QUIÉN VINO! VAMOS A PRESENTARLO.', category: 'gameplay' },
+  { id: 'article_hint_retry', label: 'SOCIOS MÁGICOS: PISTA DE ERROR', defaultText: 'ESCUCHÁ CÓMO SUENA. PROBEMOS CON EL OTRO.', category: 'feedback' },
+  { id: 'article_plural_intro', label: 'SOCIOS MÁGICOS: FASE PLURAL', defaultText: '¡AHORA SON MUCHOS! VAMOS A PRESENTARLOS.', category: 'gameplay' },
 ];
 
 const generateAllTracks = (): AudioTrackItem[] => {
