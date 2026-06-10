@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Mic, Square, Play, Trash2, X, Volume2, Save, VolumeX, CheckCircle, RefreshCw } from 'lucide-react';
 import { saveAudio, deleteAudio, getAllAudios } from '../utils/audioDb';
+import { getComplexSyllables } from '../data/complexWords';
 
 interface AudioSettingsProps {
   onClose: () => void;
@@ -12,7 +13,7 @@ interface AudioTrackItem {
   id: string;
   label: string;
   defaultText: string;
-  category: 'vocal' | 'gameplay' | 'feedback';
+  category: 'vocal' | 'gameplay' | 'feedback' | 'complex';
 }
 
 const VOWELS = ['A', 'E', 'I', 'O', 'U'] as const;
@@ -31,6 +32,9 @@ const BASE_TRACKS: AudioTrackItem[] = [
   { id: 'train_intro', label: 'TREN: BIENVENIDA', defaultText: '¡SUBE AL TREN DE LAS ACCIONES! VAMOS A ARMAR ORACIONES.', category: 'gameplay' },
   { id: 'train_hint_retry', label: 'TREN: PISTA DE ERROR', defaultText: 'ESA PIEZA NO VA EN ESE VAGÓN. PROBEMOS CON OTRA.', category: 'feedback' },
   { id: 'train_princess', label: 'TREN: PREMIO PRINCESA', defaultText: '¡LA PRINCESA QUIERE PINTAR! ¡VAMOS A PINTAR CON ELLA!', category: 'gameplay' },
+  { id: 'lab_intro', label: 'LABORATORIO: BIENVENIDA', defaultText: '¡BIENVENIDA AL LABORATORIO DE LOS HECHIZOS! VAMOS A ARMAR PALABRAS MÁGICAS.', category: 'gameplay' },
+  { id: 'lab_hint_retry', label: 'LABORATORIO: PISTA DE ERROR', defaultText: 'FIJATE BIEN Y PROBÁ CON OTRA SÍLABA.', category: 'feedback' },
+  { id: 'lab_spell_done', label: 'LABORATORIO: HECHIZO LOGRADO', defaultText: '¡HECHIZO LOGRADO! ¡SOS UNA MAGA DE LAS PALABRAS!', category: 'gameplay' },
 ];
 
 const generateAllTracks = (): AudioTrackItem[] => {
@@ -46,13 +50,23 @@ const generateAllTracks = (): AudioTrackItem[] => {
       });
     });
   });
+  // Complex syllables (trabadas/inversas) used by the spell lab vocabulary,
+  // so parents can record dragged sounds ("crrrra") with local pronunciation
+  getComplexSyllables().forEach((s) => {
+    tracks.push({
+      id: s,
+      label: `SÍLABA MÁGICA ${s}`,
+      defaultText: s,
+      category: 'complex',
+    });
+  });
   return tracks;
 };
 
 const AUDIO_TRACKS = generateAllTracks();
 
 export default function AudioSettings({ onClose, onUpdateCache }: AudioSettingsProps) {
-  const [activeTab, setActiveTab] = useState<'all' | 'general' | 'A' | 'E' | 'I' | 'O' | 'U'>('general');
+  const [activeTab, setActiveTab] = useState<'all' | 'general' | 'A' | 'E' | 'I' | 'O' | 'U' | 'magic'>('general');
   const [recordings, setRecordings] = useState<Record<string, string>>({}); // id -> blobUrl
 
   const [recordingId, setRecordingId] = useState<string | null>(null);
@@ -258,7 +272,7 @@ export default function AudioSettings({ onClose, onUpdateCache }: AudioSettingsP
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 px-2">
               <h3 className="font-black text-gray-800 text-sm tracking-wide uppercase">DICCIONARIO DE AUDIOS</h3>
               <div className="flex flex-wrap gap-1 bg-slate-100 p-1 rounded-2xl">
-                {(['general', 'A', 'E', 'I', 'O', 'U'] as const).map((tab) => (
+                {(['general', 'A', 'E', 'I', 'O', 'U', 'magic'] as const).map((tab) => (
                   <button
                     key={tab}
                     onClick={() => setActiveTab(tab)}
@@ -268,7 +282,7 @@ export default function AudioSettings({ onClose, onUpdateCache }: AudioSettingsP
                         : 'text-slate-600 hover:text-slate-800'
                     }`}
                   >
-                    {tab === 'general' ? 'GUÍAS' : `VOCAL ${tab}`}
+                    {tab === 'general' ? 'GUÍAS' : tab === 'magic' ? 'SÍLABAS MÁGICAS' : `VOCAL ${tab}`}
                   </button>
                 ))}
               </div>
@@ -277,7 +291,10 @@ export default function AudioSettings({ onClose, onUpdateCache }: AudioSettingsP
             <div className="space-y-2 overflow-hidden rounded-2xl border border-slate-100">
               {AUDIO_TRACKS.filter((track) => {
                 if (activeTab === 'general') {
-                  return track.category !== 'vocal';
+                  return track.category === 'gameplay' || track.category === 'feedback';
+                }
+                if (activeTab === 'magic') {
+                  return track.category === 'complex';
                 }
                 return track.category === 'vocal' && track.id.endsWith(activeTab);
               }).map((track) => {
@@ -295,7 +312,7 @@ export default function AudioSettings({ onClose, onUpdateCache }: AudioSettingsP
                     <div className="flex-1 space-y-1">
                       <div className="flex items-center gap-2">
                         <span className="text-xs font-semibold py-0.5 px-2.5 rounded-full bg-slate-100 text-slate-600 uppercase">
-                          {track.category === 'vocal' ? 'SÍLABAS' : track.category === 'gameplay' ? 'GUÍA' : 'FESTEJOS'}
+                          {track.category === 'vocal' ? 'SÍLABAS' : track.category === 'complex' ? 'MÁGICAS' : track.category === 'gameplay' ? 'GUÍA' : 'FESTEJOS'}
                         </span>
                         {isCustom ? (
                           <span className="flex items-center gap-1 text-emerald-600 text-xs font-bold bg-emerald-50 px-2 rounded-full uppercase">

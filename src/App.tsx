@@ -6,6 +6,7 @@ import ReadingGame from './components/ReadingGame';
 import SyllabicSynthesisGame from './components/SyllabicSynthesisGame';
 import ArticleGame, { PLURAL_UNLOCK_STREAK } from './components/ArticleGame';
 import SentenceTrainGame from './components/SentenceTrainGame';
+import SpellLabGame from './components/SpellLabGame';
 import FriendsAnimation from './components/FriendsAnimation';
 import ColoringGame from './components/ColoringGame';
 import AudioSettings from './components/AudioSettings';
@@ -14,7 +15,8 @@ import { getAllAudios } from './utils/audioDb';
 
 export default function App() {
   const [currentMode, setCurrentMode] = useState<'welcome' | 'playing' | 'reward_dance' | 'coloring'>('welcome');
-  const [gameMode, setGameMode] = useState<'reading' | 'synthesis' | 'articles' | 'train'>('reading');
+  const [gameMode, setGameMode] = useState<'reading' | 'synthesis' | 'articles' | 'train' | 'lab'>('reading');
+  const [labPhase, setLabPhase] = useState<'trabadas' | 'inversas'>('trabadas');
   // In-session streak of first-try correct answers in the article game; unlocks the plural phase
   const [articleStreak, setArticleStreak] = useState<number>(0);
   const [vowelLevel, setVowelLevel] = useState<'A' | 'E' | 'I' | 'O' | 'U'>('A');
@@ -297,6 +299,17 @@ export default function App() {
                     <span className="font-extrabold text-2xs uppercase tracking-wide">TREN DE ACCIONES</span>
                     <span className="text-[9px] text-slate-500 font-bold uppercase mt-1 leading-snug">ORDENA LAS PIEZAS Y ARMA LA ORACIÓN</span>
                   </button>
+                  <button
+                    onClick={() => setGameMode('lab')}
+                    className={`p-2.5 col-span-2 flex flex-col items-center justify-center rounded-3xl transition cursor-pointer select-none border-2 active:scale-95 ${gameMode === 'lab'
+                      ? 'bg-purple-100/60 border-purple-400 text-purple-950 font-black shadow-sm'
+                      : 'bg-white hover:bg-slate-50 border-slate-200 text-slate-600'
+                      }`}
+                  >
+                    <span className="text-3xl mb-1">🧪</span>
+                    <span className="font-extrabold text-2xs uppercase tracking-wide">LABORATORIO DE HECHIZOS</span>
+                    <span className="text-[9px] text-slate-500 font-bold uppercase mt-1 leading-snug">ARMÁ PALABRAS CON SÍLABAS MÁGICAS</span>
+                  </button>
                 </div>
               </div>
 
@@ -396,7 +409,7 @@ export default function App() {
                     </div>
                   </div>
                 </>
-              ) : (
+              ) : gameMode === 'train' ? (
                 <>
                   {/* Game Mode Intro Badge for the sentence train game */}
                   <div className="bg-pink-50/70 border border-pink-100 rounded-3xl p-5 mb-6 flex items-center gap-4 text-left">
@@ -405,6 +418,50 @@ export default function App() {
                       <h3 className="font-extrabold text-purple-900 text-base">EL TREN DE LAS ACCIONES</h3>
                       <p className="text-xs text-slate-600 leading-normal">
                         ORDENA LAS PIEZAS EN LOS VAGONES PARA ARMAR ORACIONES. ¡LA ÚLTIMA TRAE UNA SORPRESA DE PINTURA!
+                      </p>
+                    </div>
+                  </div>
+                </>
+              ) : (
+                <>
+                  {/* Phase selection bar for the spell lab */}
+                  <div className="bg-purple-50/50 border border-purple-100 rounded-3xl p-4.5 mb-6 space-y-2.5">
+                    <p className="text-xs font-black text-purple-700 uppercase tracking-widest text-center">
+                      ¿QUÉ SÍLABAS MÁGICAS PRACTICAMOS?
+                    </p>
+                    <div className="grid grid-cols-2 gap-2">
+                      {(['trabadas', 'inversas'] as const).map((p) => {
+                        const isSelected = labPhase === p;
+                        const labels = {
+                          trabadas: { label: 'TRABADAS', icon: '🧪', desc: 'CRA, BRA, GLO...' },
+                          inversas: { label: 'INVERSAS', icon: '⚗️', desc: 'CAS, CAR, PAS...' },
+                        };
+                        const { label, icon, desc } = labels[p];
+                        return (
+                          <button
+                            key={p}
+                            onClick={() => setLabPhase(p)}
+                            className={`py-3 flex flex-col items-center justify-center rounded-2xl transition cursor-pointer select-none border-2 active:scale-95 ${isSelected
+                              ? 'bg-rose-500/20 border-rose-400 text-rose-900 font-black shadow-sm'
+                              : 'bg-white hover:bg-slate-50 border-slate-200/80 text-slate-600'
+                              }`}
+                          >
+                            <span className="text-2xl mb-1">{icon}</span>
+                            <span className="text-xs font-black uppercase">{label}</span>
+                            <span className="text-[9px] text-slate-500 font-bold mt-0.5">{desc}</span>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+
+                  {/* Game Mode Intro Badge for the spell lab */}
+                  <div className="bg-pink-50/70 border border-pink-100 rounded-3xl p-5 mb-6 flex items-center gap-4 text-left">
+                    <div className="text-4xl">🧪</div>
+                    <div>
+                      <h3 className="font-extrabold text-purple-900 text-base">EL LABORATORIO DE LOS HECHIZOS</h3>
+                      <p className="text-xs text-slate-600 leading-normal">
+                        ARMÁ PALABRAS CON SÍLABAS MÁGICAS: LAS CONSONANTES EN AZUL Y LAS VOCALES EN ROSA TE AYUDAN A LEERLAS. ¡CADA PALABRA ES UN HECHIZO!
                       </p>
                     </div>
                   </div>
@@ -426,7 +483,9 @@ export default function App() {
                       ? '¡EMPEZAR A ARMAR PALABRAS!'
                       : gameMode === 'articles'
                       ? '¡JUGAR CON EL Y LA!'
-                      : '¡SUBIR AL TREN!'}
+                      : gameMode === 'train'
+                      ? '¡SUBIR AL TREN!'
+                      : '¡A HACER HECHIZOS!'}
                   </span>
                 </button>
 
@@ -504,7 +563,7 @@ export default function App() {
                       articleStreak={articleStreak}
                       setArticleStreak={setArticleStreak}
                     />
-                  ) : (
+                  ) : gameMode === 'train' ? (
                     <SentenceTrainGame
                       customVoices={customVoices}
                       onLevelComplete={handleLevelComplete}
@@ -513,6 +572,17 @@ export default function App() {
                       teddyState={teddyState}
                       setTeddyState={setTeddyState}
                       onColoringReward={handleColoring}
+                    />
+                  ) : (
+                    <SpellLabGame
+                      key={labPhase}
+                      phase={labPhase}
+                      customVoices={customVoices}
+                      onLevelComplete={handleLevelComplete}
+                      playAudioPrompt={playAudioPrompt}
+                      onBackToMenu={handleBackToMenu}
+                      teddyState={teddyState}
+                      setTeddyState={setTeddyState}
                     />
                   )}
                 </div>
