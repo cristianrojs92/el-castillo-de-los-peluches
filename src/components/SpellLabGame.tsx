@@ -5,6 +5,7 @@ import { TeddyBearState } from './TeddyBear';
 import { COMPLEX_WORDS_DATABASE, ComplexWordData } from '../data/complexWords';
 import { scrambleSyllables } from '../utils/scramble';
 import ColorCodedText from './ColorCodedText';
+import WordTypingChallenge from './WordTypingChallenge';
 
 interface SpellLabGameProps {
   customVoices: Record<string, string>;
@@ -46,6 +47,7 @@ export default function SpellLabGame({
   const [shakingKey, setShakingKey] = useState<number | null>(null);
   const [isAnswering, setIsAnswering] = useState<boolean>(false);
   const [isFused, setIsFused] = useState<boolean>(false);
+  const [showTypingChallenge, setShowTypingChallenge] = useState<boolean>(false);
   const [bubbleText, setBubbleText] = useState<string>('');
 
   const introFired = useRef<boolean>(false);
@@ -130,13 +132,10 @@ export default function SpellLabGame({
         spellingTts += `¡${activeWord.clueName}!`;
         await playAudioPrompt(spellingTts, `lab_complete_${activeWord.id}`);
 
-        await new Promise((r) => setTimeout(r, 1200));
+        await new Promise((r) => setTimeout(r, 800));
 
-        if (currentIndex + 1 < roundWords.length) {
-          setCurrentIndex((prev) => prev + 1);
-        } else {
-          onLevelComplete();
-        }
+        // Final step of the spell: write the word
+        setShowTypingChallenge(true);
       } else {
         const nextSyllable = activeWord.syllables[newPlaced];
         setBubbleText('¡SÍLABA CORRECTA!\n\n¿CUÁL SIGUE AHORA?');
@@ -168,6 +167,32 @@ export default function SpellLabGame({
       setIsAnswering(false);
     }
   };
+
+  // Advance after the typing challenge completes
+  const handleTypingComplete = () => {
+    setShowTypingChallenge(false);
+    setIsFused(false);
+    if (currentIndex + 1 < roundWords.length) {
+      setCurrentIndex((prev) => prev + 1);
+    } else {
+      onLevelComplete();
+    }
+  };
+
+  // Final step of each spell: type the word (voseo texts for the lab)
+  if (showTypingChallenge) {
+    return (
+      <WordTypingChallenge
+        word={activeWord.word}
+        emoji={activeWord.emoji}
+        onComplete={handleTypingComplete}
+        playAudioPrompt={playAudioPrompt}
+        teddyState={teddyState}
+        setTeddyState={setTeddyState}
+        voseo
+      />
+    );
+  }
 
   return (
     <div className="flex-1 flex flex-col justify-between p-4 md:p-6 w-full max-w-lg mx-auto relative select-none">

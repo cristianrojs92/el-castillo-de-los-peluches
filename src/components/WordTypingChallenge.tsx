@@ -10,7 +10,12 @@ interface WordTypingChallengeProps {
   playAudioPrompt: (text: string, id: string) => Promise<void>;
   teddyState?: TeddyBearState;
   setTeddyState?: (state: TeddyBearState) => void;
+  voseo?: boolean; // Argentine voseo texts ("Escribí" instead of "Escribe") — used by the spell lab
 }
+
+// Accept unaccented input for accented letters (Í, Á...) since kids can't type
+// dead keys; Ñ stays distinct (handled via the double-N gesture)
+const stripAccents = (ch: string) => (ch === 'Ñ' ? ch : ch.normalize('NFD').replace(/[\u0300-\u036f]/g, ''));
 
 export default function WordTypingChallenge({
   word,
@@ -19,6 +24,7 @@ export default function WordTypingChallenge({
   playAudioPrompt,
   teddyState,
   setTeddyState,
+  voseo = false,
 }: WordTypingChallengeProps) {
   const [typedLetters, setTypedLetters] = useState<string[]>([]);
   const [isShaking, setIsShaking] = useState(false);
@@ -36,7 +42,12 @@ export default function WordTypingChallenge({
     // Play intro audio only once
     if (!introFiredRef.current) {
       introFiredRef.current = true;
-      playAudioPrompt(`Ahora escribe la palabra ${word.toLowerCase()}.`, `typing_intro_${word}`);
+      playAudioPrompt(
+        voseo
+          ? `Ahora escribí la palabra ${word.toLowerCase()}.`
+          : `Ahora escribe la palabra ${word.toLowerCase()}.`,
+        `typing_intro_${word}`
+      );
     }
 
     // Cleanup timeouts on unmount
@@ -54,8 +65,9 @@ export default function WordTypingChallenge({
     setTypedLetters((prevLetters) => {
       const expected = word[prevLetters.length];
 
-      if (charToAdd === expected) {
-        const nextLetters = [...prevLetters, charToAdd];
+      if (stripAccents(charToAdd) === stripAccents(expected)) {
+        // Store the expected letter so accented characters display correctly (DELFÍN)
+        const nextLetters = [...prevLetters, expected];
         setWrongLetter(null);
         setIsShaking(false);
         setTeddyState?.('correct');
@@ -156,7 +168,7 @@ export default function WordTypingChallenge({
           {emoji}
         </motion.div>
         <h2 className="text-3xl md:text-4xl font-black text-purple-900 text-center uppercase">
-          ¡Escribe la palabra!
+          {voseo ? '¡Escribí la palabra!' : '¡Escribe la palabra!'}
         </h2>
       </div>
 
@@ -204,8 +216,8 @@ export default function WordTypingChallenge({
       <div className="text-center">
         <p className="text-base md:text-lg font-bold text-purple-700 uppercase tracking-wide">
           {typedLetters.length === 0
-            ? 'Escribe la primera letra'
-            : `Llevas ${typedLetters.length} de ${word.length} letras`}
+            ? voseo ? 'Escribí la primera letra' : 'Escribe la primera letra'
+            : `${voseo ? 'Llevás' : 'Llevas'} ${typedLetters.length} de ${word.length} letras`}
         </p>
       </div>
     </div>
