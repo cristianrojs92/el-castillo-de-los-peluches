@@ -28,6 +28,9 @@ const BASE_TRACKS: AudioTrackItem[] = [
   { id: 'article_intro', label: 'SOCIOS MÁGICOS: PRESENTACIÓN', defaultText: '¡MIREN QUIÉN VINO! VAMOS A PRESENTARLO.', category: 'gameplay' },
   { id: 'article_hint_retry', label: 'SOCIOS MÁGICOS: PISTA DE ERROR', defaultText: 'ESCUCHÁ CÓMO SUENA. PROBEMOS CON EL OTRO.', category: 'feedback' },
   { id: 'article_plural_intro', label: 'SOCIOS MÁGICOS: FASE PLURAL', defaultText: '¡AHORA SON MUCHOS! VAMOS A PRESENTARLOS.', category: 'gameplay' },
+  { id: 'train_intro', label: 'TREN: BIENVENIDA', defaultText: '¡SUBE AL TREN DE LAS ACCIONES! VAMOS A ARMAR ORACIONES.', category: 'gameplay' },
+  { id: 'train_hint_retry', label: 'TREN: PISTA DE ERROR', defaultText: 'ESA PIEZA NO VA EN ESE VAGÓN. PROBEMOS CON OTRA.', category: 'feedback' },
+  { id: 'train_princess', label: 'TREN: PREMIO PRINCESA', defaultText: '¡LA PRINCESA QUIERE PINTAR! ¡VAMOS A PINTAR CON ELLA!', category: 'gameplay' },
 ];
 
 const generateAllTracks = (): AudioTrackItem[] => {
