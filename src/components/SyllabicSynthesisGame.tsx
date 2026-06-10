@@ -5,6 +5,7 @@ import { TeddyBearState } from './TeddyBear';
 import WordTypingChallenge from './WordTypingChallenge';
 import { WORDS_DATABASE } from '../data/words';
 import { scrambleSyllables } from '../utils/scramble';
+import ColorCodedText from './ColorCodedText';
 
 interface SyllabicSynthesisGameProps {
   customVoices: Record<string, string>;
@@ -368,7 +369,7 @@ export default function SyllabicSynthesisGame({
               CONSTRUYE LA PALABRA
             </p>
             <h2 className="text-lg md:text-xl font-black text-purple-700 tracking-tight leading-tighter">
-              {isFused ? activeWord.word : `?? ${activeWord.word.slice(0, 1)}... ??`}
+              {isFused ? <ColorCodedText text={activeWord.word} /> : `?? ${activeWord.word.slice(0, 1)}... ??`}
             </h2>
           </motion.div>
         </div>
@@ -385,7 +386,7 @@ export default function SyllabicSynthesisGame({
                 <motion.div
                   className={`w-20 h-20 sm:w-22 sm:h-22 rounded-2xl flex items-center justify-center relative transition-all ${
                     isSyllablePlaced
-                      ? 'bg-gradient-to-br from-pink-500 to-rose-450 border-0 shadow-md'
+                      ? 'bg-white border-3 border-purple-400 shadow-md'
                       : 'border-3 border-dashed border-purple-200 bg-white/40'
                   }`}
                   animate={
@@ -408,15 +409,15 @@ export default function SyllabicSynthesisGame({
                         animate={{ y: 0, opacity: 1, scale: 1 }}
                         exit={{ opacity: 0, scale: 0.5 }}
                         transition={{ type: 'spring', damping: 11, stiffness: 95 }}
-                        className="text-3xl sm:text-4xl font-extrabold font-sans text-white tracking-wide uppercase select-none"
+                        className="text-3xl sm:text-4xl font-extrabold font-sans tracking-wide uppercase select-none"
                       >
-                        {syllable}
+                        <ColorCodedText text={syllable} />
                       </motion.span>
                     )}
                   </AnimatePresence>
 
                   {/* Little drawer order numbers */}
-                  <span className={`absolute bottom-1 right-1.5 text-4xs font-black select-none ${isSyllablePlaced ? 'text-pink-100' : 'text-purple-300'}`}>
+                  <span className="absolute bottom-1 right-1.5 text-4xs font-black select-none text-purple-300">
                     {index + 1}
                   </span>
                 </motion.div>
@@ -482,8 +483,8 @@ export default function SyllabicSynthesisGame({
                       fontFamily: '"Fredoka", "Arial Rounded MT Bold", sans-serif',
                     }}
                   >
-                    <span className="text-3xl sm:text-4xl font-black font-sans text-slate-850 group-hover:text-pink-500 transition-colors tracking-tight select-none">
-                      {item.text}
+                    <span className="text-3xl sm:text-4xl font-black font-sans tracking-tight select-none">
+                      <ColorCodedText text={item.text} />
                     </span>
                   </button>
                 </motion.div>

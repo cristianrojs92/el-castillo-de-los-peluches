@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { motion } from 'motion/react';
 import { TeddyBearState } from './TeddyBear';
+import ColorCodedText from './ColorCodedText';
 
 interface WordTypingChallengeProps {
   word: string;
@@ -174,14 +175,14 @@ export default function WordTypingChallenge({
               className={`
                 w-16 h-24 md:w-20 md:h-28 rounded-xl border-4 flex items-center justify-center
                 font-black text-4xl md:text-5xl transition-all
-                ${isTyped ? 'bg-green-400 border-green-500 text-white shadow-lg' : ''}
+                ${isTyped ? 'bg-white border-green-500 shadow-lg' : ''}
                 ${isActive && wrongLetter ? 'bg-red-100 border-red-500 text-red-600' : ''}
                 ${isActive && !wrongLetter && !isShaking ? 'border-rose-500 scale-110 animate-pulse' : ''}
                 ${!isTyped && !isActive ? 'bg-white border-slate-200' : ''}
                 ${isActive && isShaking && !wrongLetter ? 'animate-shake border-red-500' : ''}
               `}
             >
-              {isTyped ? typedLetters[i] : isActive && wrongLetter ? wrongLetter : ''}
+              {isTyped ? <ColorCodedText text={typedLetters[i]} /> : isActive && wrongLetter ? wrongLetter : ''}
             </motion.div>
           );
         })}

@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'motion/react';
 import { Sparkles, ArrowLeft } from 'lucide-react';
 import { TeddyBearState } from './TeddyBear';
 import { Syllable } from '../types';
+import ColorCodedText from './ColorCodedText';
 
 interface ReadingGameProps {
   key?: string | number;
@@ -358,8 +359,8 @@ export default function ReadingGame({ vowelLevel, difficulty = 'easy', onChangeV
                           fontFamily: '"Fredoka", "Arial Rounded MT Bold", sans-serif',
                         }}
                       >
-                        <span className={`${getTextSizeClass()} font-black font-sans text-slate-900 group-hover:text-pink-500 transition-colors tracking-tight`}>
-                          {choice.text}
+                        <span className={`${getTextSizeClass()} font-black font-sans tracking-tight`}>
+                          <ColorCodedText text={choice.text} />
                         </span>
                       </button>
                     </motion.div>

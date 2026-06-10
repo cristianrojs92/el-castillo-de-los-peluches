@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'motion/react';
 import { Sparkles, ArrowLeft } from 'lucide-react';
 import { TeddyBearState } from './TeddyBear';
 import { WORDS_DATABASE, WordData } from '../data/words';
+import ColorCodedText from './ColorCodedText';
 
 interface ArticleGameProps {
   customVoices: Record<string, string>;
@@ -275,7 +276,7 @@ export default function ArticleGame({
             <div
               className={`w-20 h-16 sm:w-24 sm:h-18 rounded-2xl flex items-center justify-center relative transition-all ${
                 placedArticle
-                  ? 'bg-gradient-to-br from-pink-500 to-rose-450 border-0 shadow-md'
+                  ? 'bg-white border-3 border-purple-400 shadow-md'
                   : 'border-3 border-dashed border-purple-200 bg-white/40'
               }`}
             >
@@ -287,9 +288,9 @@ export default function ArticleGame({
                     animate={{ y: 0, opacity: 1, scale: 1 }}
                     exit={{ opacity: 0, scale: 0.5 }}
                     transition={{ type: 'spring', damping: 11, stiffness: 95 }}
-                    className="text-2xl sm:text-3xl font-extrabold font-sans text-white tracking-wide uppercase select-none"
+                    className="text-2xl sm:text-3xl font-extrabold font-sans tracking-wide uppercase select-none"
                   >
-                    {placedArticle}
+                    <ColorCodedText text={placedArticle} />
                   </motion.span>
                 )}
               </AnimatePresence>
@@ -304,8 +305,8 @@ export default function ArticleGame({
               )}
             </div>
 
-            <h2 className="text-3xl sm:text-4xl font-black text-purple-700 tracking-tight leading-tighter">
-              {displayWord}
+            <h2 className="text-3xl sm:text-4xl font-black tracking-tight leading-tighter">
+              <ColorCodedText text={displayWord} />
             </h2>
           </div>
         </motion.div>
@@ -352,8 +353,8 @@ export default function ArticleGame({
                     fontFamily: '"Fredoka", "Arial Rounded MT Bold", sans-serif',
                   }}
                 >
-                  <span className="text-3xl sm:text-4xl font-black font-sans text-slate-850 group-hover:text-pink-500 transition-colors tracking-tight select-none">
-                    {article}
+                  <span className="text-3xl sm:text-4xl font-black font-sans tracking-tight select-none">
+                    <ColorCodedText text={article} />
                   </span>
                 </button>
               </motion.div>

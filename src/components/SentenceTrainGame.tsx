@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'motion/react';
 import { Sparkles, ArrowLeft } from 'lucide-react';
 import { TeddyBearState } from './TeddyBear';
 import { SENTENCES_DATABASE, SentenceData } from '../data/sentences';
+import ColorCodedText from './ColorCodedText';
 
 interface SentenceTrainGameProps {
   customVoices: Record<string, string>;
@@ -301,10 +302,10 @@ export default function SentenceTrainGame({
                   animate={{ opacity: 1, scale: [0.6, 1.1, 1] }}
                   exit={{ opacity: 0, scale: 0.8 }}
                   transition={{ duration: 0.6 }}
-                  className="bg-gradient-to-r from-pink-500 to-rose-450 px-6 py-4 rounded-3xl shadow-lg"
+                  className="bg-white border-3 border-purple-400 px-6 py-4 rounded-3xl shadow-lg"
                 >
-                  <span className="text-2xl sm:text-3xl font-extrabold text-white tracking-wide uppercase select-none whitespace-nowrap">
-                    {fullSentence}
+                  <span className="text-2xl sm:text-3xl font-extrabold tracking-wide uppercase select-none whitespace-nowrap">
+                    <ColorCodedText text={fullSentence} />
                   </span>
                 </motion.div>
               ) : (
@@ -323,7 +324,7 @@ export default function SentenceTrainGame({
                         <div
                           className={`min-w-[4.2rem] sm:min-w-[5rem] h-16 sm:h-18 px-2 rounded-2xl flex items-center justify-center relative transition-all ${
                             isPlaced
-                              ? 'bg-gradient-to-br from-pink-500 to-rose-450 border-0 shadow-md'
+                              ? 'bg-white border-3 border-purple-400 shadow-md'
                               : 'border-3 border-dashed border-purple-200 bg-white/40'
                           }`}
                         >
@@ -335,14 +336,14 @@ export default function SentenceTrainGame({
                                 animate={{ y: 0, opacity: 1, scale: 1 }}
                                 exit={{ opacity: 0, scale: 0.5 }}
                                 transition={{ type: 'spring', damping: 11, stiffness: 95 }}
-                                className="text-lg sm:text-2xl font-extrabold font-sans text-white tracking-wide uppercase select-none"
+                                className="text-lg sm:text-2xl font-extrabold font-sans tracking-wide uppercase select-none"
                               >
-                                {pieceText}
+                                <ColorCodedText text={pieceText} />
                               </motion.span>
                             )}
                           </AnimatePresence>
 
-                          <span className={`absolute bottom-0.5 right-1.5 text-4xs font-black select-none ${isPlaced ? 'text-pink-100' : 'text-purple-300'}`}>
+                          <span className="absolute bottom-0.5 right-1.5 text-4xs font-black select-none text-purple-300">
                             {index + 1}
                           </span>
                         </div>
@@ -409,8 +410,8 @@ export default function SentenceTrainGame({
                       fontFamily: '"Fredoka", "Arial Rounded MT Bold", sans-serif',
                     }}
                   >
-                    <span className="text-2xl sm:text-3xl font-black font-sans text-slate-850 group-hover:text-pink-500 transition-colors tracking-tight select-none">
-                      {item.text}
+                    <span className="text-2xl sm:text-3xl font-black font-sans tracking-tight select-none">
+                      <ColorCodedText text={item.text} />
                     </span>
                   </button>
                 </motion.div>

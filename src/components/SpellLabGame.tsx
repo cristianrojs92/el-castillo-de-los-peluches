@@ -4,6 +4,7 @@ import { Sparkles, ArrowLeft } from 'lucide-react';
 import { TeddyBearState } from './TeddyBear';
 import { COMPLEX_WORDS_DATABASE, ComplexWordData } from '../data/complexWords';
 import { scrambleSyllables } from '../utils/scramble';
+import ColorCodedText from './ColorCodedText';
 
 interface SpellLabGameProps {
   customVoices: Record<string, string>;
@@ -16,7 +17,6 @@ interface SpellLabGameProps {
 }
 
 const WORDS_PER_ROUND = 6;
-const VOWEL_RE = /[AEIOUÁÉÍÓÚ]/;
 
 interface ChoiceItem {
   text: string;
@@ -28,40 +28,6 @@ const pickRoundWords = (phase: 'trabadas' | 'inversas'): ComplexWordData[] =>
   COMPLEX_WORDS_DATABASE.filter((w) => w.phase === phase)
     .sort(() => Math.random() - 0.5)
     .slice(0, WORDS_PER_ROUND);
-
-// Visual scaffolding (HU 2.1 + 2.3): consonants in blue, vowels in pink.
-// When a sílaba trabada appears, its two leading consonants "hug" (slide together).
-function ColorCodedSyllable({ syllable, hug = false }: { syllable: string; hug?: boolean }) {
-  const letters = syllable.split('');
-  const isTrabada = letters.length >= 2 && !VOWEL_RE.test(letters[0]) && !VOWEL_RE.test(letters[1]);
-
-  return (
-    <span className="inline-flex items-baseline">
-      {letters.map((letter, i) => {
-        const isVowel = VOWEL_RE.test(letter);
-        const doesHug = hug && isTrabada && i < 2;
-        return (
-          <motion.span
-            key={i}
-            initial={doesHug ? { x: i === 0 ? -10 : 10 } : false}
-            animate={doesHug ? { x: 0, scale: [1, 1.2, 1] } : undefined}
-            transition={
-              doesHug
-                ? {
-                    x: { type: 'spring', damping: 9, stiffness: 110, delay: 0.2 },
-                    scale: { delay: 0.55, duration: 0.35 },
-                  }
-                : undefined
-            }
-            className={`${isVowel ? 'text-pink-500' : 'text-blue-600'} select-none`}
-          >
-            {letter}
-          </motion.span>
-        );
-      })}
-    </span>
-  );
-}
 
 export default function SpellLabGame({
   customVoices,
@@ -333,7 +299,7 @@ export default function SpellLabGame({
                           transition={{ type: 'spring', damping: 11, stiffness: 95 }}
                           className="text-2xl sm:text-3xl font-extrabold font-sans tracking-wide uppercase select-none"
                         >
-                          <ColorCodedSyllable syllable={syllable} />
+                          <ColorCodedText text={syllable} />
                         </motion.span>
                       )}
                     </AnimatePresence>
@@ -403,7 +369,7 @@ export default function SpellLabGame({
                     }}
                   >
                     <span className="text-3xl sm:text-4xl font-black font-sans tracking-tight select-none">
-                      <ColorCodedSyllable syllable={item.text} hug />
+                      <ColorCodedText text={item.text} hug />
                     </span>
                   </button>
                 </motion.div>
