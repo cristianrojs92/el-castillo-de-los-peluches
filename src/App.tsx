@@ -7,6 +7,7 @@ import SyllabicSynthesisGame from './components/SyllabicSynthesisGame';
 import ArticleGame, { PLURAL_UNLOCK_STREAK } from './components/ArticleGame';
 import SentenceTrainGame from './components/SentenceTrainGame';
 import SpellLabGame from './components/SpellLabGame';
+import StarCardsGame from './components/StarCardsGame';
 import FriendsAnimation from './components/FriendsAnimation';
 import ColoringGame from './components/ColoringGame';
 import AudioSettings from './components/AudioSettings';
@@ -15,7 +16,7 @@ import { getAllAudios } from './utils/audioDb';
 
 export default function App() {
   const [currentMode, setCurrentMode] = useState<'welcome' | 'playing' | 'reward_dance' | 'coloring'>('welcome');
-  const [gameMode, setGameMode] = useState<'reading' | 'synthesis' | 'articles' | 'train' | 'lab'>('reading');
+  const [gameMode, setGameMode] = useState<'reading' | 'synthesis' | 'articles' | 'train' | 'lab' | 'starcards'>('reading');
   const [labPhase, setLabPhase] = useState<'trabadas' | 'inversas'>('trabadas');
   // In-session streak of first-try correct answers in the article game; unlocks the plural phase
   const [articleStreak, setArticleStreak] = useState<number>(0);
@@ -301,7 +302,7 @@ export default function App() {
                   </button>
                   <button
                     onClick={() => setGameMode('lab')}
-                    className={`p-2.5 col-span-2 flex flex-col items-center justify-center rounded-3xl transition cursor-pointer select-none border-2 active:scale-95 ${gameMode === 'lab'
+                    className={`p-2.5 flex flex-col items-center justify-center rounded-3xl transition cursor-pointer select-none border-2 active:scale-95 ${gameMode === 'lab'
                       ? 'bg-purple-100/60 border-purple-400 text-purple-950 font-black shadow-sm'
                       : 'bg-white hover:bg-slate-50 border-slate-200 text-slate-600'
                       }`}
@@ -309,6 +310,17 @@ export default function App() {
                     <span className="text-3xl mb-1">🧪</span>
                     <span className="font-extrabold text-2xs uppercase tracking-wide">LABORATORIO DE HECHIZOS</span>
                     <span className="text-[9px] text-slate-500 font-bold uppercase mt-1 leading-snug">ARMÁ PALABRAS CON SÍLABAS MÁGICAS</span>
+                  </button>
+                  <button
+                    onClick={() => setGameMode('starcards')}
+                    className={`p-2.5 flex flex-col items-center justify-center rounded-3xl transition cursor-pointer select-none border-2 active:scale-95 ${gameMode === 'starcards'
+                      ? 'bg-purple-100/60 border-purple-400 text-purple-950 font-black shadow-sm'
+                      : 'bg-white hover:bg-slate-50 border-slate-200 text-slate-600'
+                      }`}
+                  >
+                    <span className="text-3xl mb-1">🌠</span>
+                    <span className="font-extrabold text-2xs uppercase tracking-wide">CARTAS ESTELARES</span>
+                    <span className="text-[9px] text-slate-500 font-bold uppercase mt-1 leading-snug">MANTÉN TU VOZ Y DESPEJÁ LA NIEBLA MÁGICA</span>
                   </button>
                 </div>
               </div>
@@ -422,6 +434,19 @@ export default function App() {
                     </div>
                   </div>
                 </>
+              ) : gameMode === 'starcards' ? (
+                <>
+                  {/* Game Mode Intro Badge for the star cards game */}
+                  <div className="bg-pink-50/70 border border-pink-100 rounded-3xl p-5 mb-6 flex items-center gap-4 text-left">
+                    <div className="text-4xl">🌠</div>
+                    <div>
+                      <h3 className="font-extrabold text-purple-900 text-base">EL PUENTE DE CARTAS ESTELARES</h3>
+                      <p className="text-xs text-slate-600 leading-normal">
+                        HACÉ UN SONIDO LARGO (¡PAAAA!) PARA DESPEJAR LA NIEBLA DE CADA CARTA. ESTE JUEGO USA EL MICRÓFONO PARA ESCUCHAR LA VOZ.
+                      </p>
+                    </div>
+                  </div>
+                </>
               ) : (
                 <>
                   {/* Phase selection bar for the spell lab */}
@@ -485,6 +510,8 @@ export default function App() {
                       ? '¡JUGAR CON EL Y LA!'
                       : gameMode === 'train'
                       ? '¡SUBIR AL TREN!'
+                      : gameMode === 'starcards'
+                      ? '¡A DESPEJAR LA NIEBLA!'
                       : '¡A HACER HECHIZOS!'}
                   </span>
                 </button>
@@ -572,6 +599,15 @@ export default function App() {
                       teddyState={teddyState}
                       setTeddyState={setTeddyState}
                       onColoringReward={handleColoring}
+                    />
+                  ) : gameMode === 'starcards' ? (
+                    <StarCardsGame
+                      customVoices={customVoices}
+                      onLevelComplete={handleLevelComplete}
+                      playAudioPrompt={playAudioPrompt}
+                      onBackToMenu={handleBackToMenu}
+                      teddyState={teddyState}
+                      setTeddyState={setTeddyState}
                     />
                   ) : (
                     <SpellLabGame

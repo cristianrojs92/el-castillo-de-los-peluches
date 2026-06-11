@@ -35,6 +35,10 @@ const BASE_TRACKS: AudioTrackItem[] = [
   { id: 'lab_intro', label: 'LABORATORIO: BIENVENIDA', defaultText: '¡BIENVENIDA AL LABORATORIO DE LOS HECHIZOS! VAMOS A ARMAR PALABRAS MÁGICAS.', category: 'gameplay' },
   { id: 'lab_hint_retry', label: 'LABORATORIO: PISTA DE ERROR', defaultText: 'FIJATE BIEN Y PROBÁ CON OTRA SÍLABA.', category: 'feedback' },
   { id: 'lab_spell_done', label: 'LABORATORIO: HECHIZO LOGRADO', defaultText: '¡HECHIZO LOGRADO! ¡SOS UNA MAGA DE LAS PALABRAS!', category: 'gameplay' },
+  { id: 'star_intro', label: 'CARTAS ESTELARES: BIENVENIDA', defaultText: '¡BIENVENIDA AL PUENTE DE LAS CARTAS ESTELARES! HACÉ UN SONIDO LARGO, COMO PAAAA, PARA DESPEJAR LA NIEBLA.', category: 'gameplay' },
+  { id: 'star_hold_prompt', label: 'CARTAS ESTELARES: INSTRUCCIÓN', defaultText: 'APRETÁ LA VARITA Y HACÉ UN SONIDO LARGO. ¡NO LO SUELTES!', category: 'gameplay' },
+  { id: 'star_praise', label: 'CARTAS ESTELARES: FESTEJO', defaultText: '¡QUÉ GENIA!', category: 'feedback' },
+  { id: 'star_victory', label: 'CARTAS ESTELARES: VICTORIA', defaultText: '¡CRUZASTE EL PUENTE DE LAS CARTAS ESTELARES! ¡SOS UNA MAGA DE LA VOZ!', category: 'gameplay' },
 ];
 
 const generateAllTracks = (): AudioTrackItem[] => {
